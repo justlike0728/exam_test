@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>計程車執業登記證模擬考</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: "Microsoft JhengHei", "Noto Sans TC", sans-serif; 
+      min-height: 100vh; 
+      background: linear-gradient(135deg, #1a365d 0%, #0f172a 50%, #1e293b 100%); 
+      padding: 20px;
+    }
+    .container { max-width: 900px; margin: 0 auto; }
+    
+    .header {
+      text-align: center;
+      padding: 40px 20px;
+      margin-bottom: 32px;
+    }
+    .header-icon { font-size: 80px; margin-bottom: 16px; }
+    .header h1 { 
+      color: #fff; 
+      font-size: 32px; 
+      font-weight: 700; 
+      margin-bottom: 12px;
+      letter-spacing: 3px;
+    }
+    .header .subtitle { 
+      color: rgba(255, 255, 255, 0.6); 
+      font-size: 16px;
+      line-height: 1.6;
+    }
+    
+    .exam-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+    
+    .exam-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      border-radius: 24px;
+      padding: 32px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      text-decoration: none;
+      transition: all 0.3s ease;
+      display: block;
+    }
+    .exam-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.6);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .exam-icon { font-size: 56px; margin-bottom: 20px; }
+    .exam-title { 
+      color: #fff; 
+      font-size: 24px; 
+      font-weight: 700; 
+      margin-bottom: 12px;
+    }
+    .exam-desc { 
+      color: rgba(255, 255, 255, 0.6); 
+      font-size: 14px; 
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    
+    .exam-stats {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .stat-badge {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    
+    .card-traffic .stat-badge { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+    .card-traffic:hover { border-color: #3b82f6; }
+    
+    .card-mechanical .stat-badge { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+    .card-mechanical:hover { border-color: #f59e0b; }
+    
+    .card-geography .stat-badge { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .card-geography:hover { border-color: #10b981; }
+    
+    .enter-hint {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 14px;
+      margin-top: 16px;
+    }
+    .enter-hint span { transition: transform 0.3s ease; }
+    .exam-card:hover .enter-hint { color: rgba(255, 255, 255, 0.8); }
+    .exam-card:hover .enter-hint span { transform: translateX(4px); }
+    
+    .footer {
+      text-align: center;
+      padding: 24px;
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 13px;
+    }
+    .footer a {
+      color: rgba(255, 255, 255, 0.6);
+      text-decoration: none;
+    }
+    .footer a:hover { color: #fff; }
+    
+    .info-section {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 20px;
+      padding: 28px;
+      margin-bottom: 32px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .info-title {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .info-list {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .info-list li {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 14px;
+      padding-left: 20px;
+      position: relative;
+    }
+    .info-list li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: #34d399;
+    }
+    
+    @media (max-width: 600px) {
+      .header h1 { font-size: 26px; }
+      .exam-card { padding: 24px; }
+      .exam-icon { font-size: 48px; }
+      .exam-title { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="header-icon">🚕</div>
+      <h1>計程車執業登記證模擬考</h1>
+      <p class="subtitle">線上練習系統｜隨時隨地準備考試</p>
+    </header>
+    
+    <div class="exam-grid">
+      <a href="mechanical-quiz.html" class="exam-card card-mechanical">
+        <div class="exam-icon">🔧</div>
+        <h2 class="exam-title">機械常識</h2>
+        <p class="exam-desc">汽車構造原理、引擎系統、底盤系統、電氣系統及故障排除等</p>
+        <div class="exam-stats">
+          <span class="stat-badge">是非題 174 題</span>
+          <span class="stat-badge">選擇題 50 題</span>
+        </div>
+        <div class="enter-hint">
+          進入測驗 <span>→</span>
+        </div>
+      </a>
+      
+      <a href="traffic-law-quiz.html" class="exam-card card-traffic">
+        <div class="exam-icon">📜</div>
+        <h2 class="exam-title">交通法令</h2>
+        <p class="exam-desc">道路交通管理處罰條例、道路交通安全規則、計程車相關法規等</p>
+        <div class="exam-stats">
+          <span class="stat-badge">是非題 284 題</span>
+          <span class="stat-badge">選擇題 293 題</span>
+        </div>
+        <div class="enter-hint">
+          進入測驗 <span>→</span>
+        </div>
+      </a>
+      
+      <a href="geography-quiz.html" class="exam-card card-geography">
+        <div class="exam-icon">🗺️</div>
+        <h2 class="exam-title">地理環境</h2>
+        <p class="exam-desc">基隆市、台北市、新北市、宜蘭縣、桃園市之道路與地理環境</p>
+        <div class="exam-stats">
+          <span class="stat-badge">5 縣市</span>
+          <span class="stat-badge">814 題</span>
+        </div>
+        <div class="enter-hint">
+          進入測驗 <span>→</span>
+        </div>
+      </a>
+    </div>
+    
+    <div class="info-section">
+      <div class="info-title">📋 系統特色</div>
+      <ul class="info-list">
+        <li>題目隨機排序，每次練習不重複</li>
+        <li>選擇題選項順序隨機化</li>
+        <li>即時顯示答題對錯</li>
+        <li>測驗結束可回顧所有題目</li>
+        <li>支援手機、平板、電腦</li>
+        <li>離線也能使用</li>
+      </ul>
+    </div>
+    
+    <footer class="footer">
+      <p>本系統僅供練習參考，實際考試內容請依監理機關公告為準</p>
+    </footer>
+  </div>
+</body>
+</html>
