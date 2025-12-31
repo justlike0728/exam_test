@@ -481,9 +481,10 @@ function renderResult() {
       </div>
       
       <div class="btn-group">
-        <button class="btn-secondary" id="reviewBtn">查看答案</button>
-        <button class="btn-primary" id="retryBtn" style="margin-top: 0;">重新測驗</button>
+        <button class="btn-secondary" id="reviewBtn">查看全部答案</button>
+        <button class="btn-secondary" id="wrongOnlyBtn" style="border-color: #ef4444; color: #f87171;">只看錯題 (${result.wrong})</button>
       </div>
+      <button class="btn-primary" id="retryBtn" style="margin-top: 12px;">重新測驗</button>
     </div>
   `;
 }
@@ -585,31 +586,72 @@ function attachEvents() {
   const reviewBtn = document.getElementById('reviewBtn');
   if (reviewBtn) {
     reviewBtn.addEventListener('click', () => {
-      showReview();
+      showReview(false);
+    });
+  }
+  
+  // Wrong only button
+  const wrongOnlyBtn = document.getElementById('wrongOnlyBtn');
+  if (wrongOnlyBtn) {
+    wrongOnlyBtn.addEventListener('click', () => {
+      showReview(true);
     });
   }
 }
 
 // Review modal
-function showReview() {
+function showReview(wrongOnly = false) {
   const cityName = questionBank[state.selectedCity].name;
   const result = calculateScore();
+  
+  // Filter questions based on wrongOnly flag
+  let questionsToShow = [];
+  state.questions.forEach((q, i) => {
+    const userAnswer = state.answers[i];
+    const isCorrect = userAnswer === q.correct;
+    if (!wrongOnly || !isCorrect) {
+      questionsToShow.push({ question: q, index: i, userAnswer, isCorrect });
+    }
+  });
+  
+  const title = wrongOnly ? `❌ ${cityName} 錯題回顧` : `📝 ${cityName} 答案回顧`;
+  const subtitle = wrongOnly 
+    ? `共 ${questionsToShow.length} 題答錯` 
+    : `答對 ${result.correct} 題 / 共 ${state.questions.length} 題`;
+  
+  // Check if no wrong answers
+  if (wrongOnly && questionsToShow.length === 0) {
+    let html = `
+      <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000; overflow-y: auto; padding: 20px; display: flex; align-items: center; justify-content: center;">
+        <div class="card" style="max-width: 400px; text-align: center;">
+          <div style="font-size: 64px; margin-bottom: 16px;">🎉</div>
+          <h2 style="color: #34d399; margin-bottom: 12px;">太厲害了！</h2>
+          <p style="color: rgba(255,255,255,0.7); margin-bottom: 24px;">全部答對，沒有錯題！</p>
+          <button class="btn-primary" onclick="this.closest('div[style*=fixed]').remove()">關閉</button>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+    return;
+  }
   
   let html = `
     <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000; overflow-y: auto; padding: 20px;">
       <div style="max-width: 800px; margin: 0 auto;">
         <div class="card">
           <div class="center" style="margin-bottom: 24px;">
-            <h2>📝 ${cityName} 答案回顧</h2>
-            <p class="subtitle">答對 ${result.correct} 題 / 共 ${state.questions.length} 題</p>
+            <h2>${title}</h2>
+            <p class="subtitle">${subtitle}</p>
           </div>
           
           <div style="max-height: 60vh; overflow-y: auto;">
   `;
   
-  state.questions.forEach((q, i) => {
-    const userAnswer = state.answers[i];
-    const isCorrect = userAnswer === q.correct;
+  questionsToShow.forEach((item) => {
+    const q = item.question;
+    const i = item.index;
+    const userAnswer = item.userAnswer;
+    const isCorrect = item.isCorrect;
     
     html += `
       <div style="background: ${isCorrect ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)'}; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid ${isCorrect ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'};">
@@ -619,6 +661,9 @@ function showReview() {
           </span>
           <span style="color: ${isCorrect ? '#34d399' : '#f87171'}; font-weight: 600;">
             ${isCorrect ? '✓ 正確' : '✗ 錯誤'}
+          </span>
+          <span style="color: rgba(255,255,255,0.4); font-size: 12px;">
+            ${q.type === 'tf' ? '是非題' : '選擇題'}
           </span>
         </div>
         <p style="color: #fff; margin-bottom: 12px; line-height: 1.6;">${q.text}</p>
