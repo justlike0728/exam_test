@@ -1121,29 +1121,24 @@
     // 開始測驗
     function startQuiz() {
       let selectedQuestions = [];
+      const count = state.questionCount === 0 ? 9999 : state.questionCount;
       
       if (state.quizType === 'trueFalse') {
-        selectedQuestions = shuffleArray(trueFalseQuestions).slice(0, state.questionCount).map(q => ({
+        selectedQuestions = shuffleArray(trueFalseQuestions).slice(0, count).map(q => ({
           ...q,
           type: 'trueFalse'
         }));
       } else if (state.quizType === 'multipleChoice') {
-        selectedQuestions = shuffleArray(multipleChoiceQuestions).slice(0, state.questionCount).map(q => ({
+        selectedQuestions = shuffleArray(multipleChoiceQuestions).slice(0, count).map(q => ({
           ...q,
           type: 'multipleChoice'
         }));
       } else {
-        const tfCount = Math.floor(state.questionCount / 2);
-        const mcCount = state.questionCount - tfCount;
-        const tfQuestions = shuffleArray(trueFalseQuestions).slice(0, tfCount).map(q => ({
-          ...q,
-          type: 'trueFalse'
-        }));
-        const mcQuestions = shuffleArray(multipleChoiceQuestions).slice(0, mcCount).map(q => ({
-          ...q,
-          type: 'multipleChoice'
-        }));
-        selectedQuestions = shuffleArray([...tfQuestions, ...mcQuestions]);
+        const allQuestions = [
+          ...trueFalseQuestions.map(q => ({ ...q, type: 'trueFalse' })),
+          ...multipleChoiceQuestions.map(q => ({ ...q, type: 'multipleChoice' }))
+        ];
+        selectedQuestions = shuffleArray(allQuestions).slice(0, count);
       }
       
       state.questions = selectedQuestions;
@@ -1209,10 +1204,12 @@
 
             <div class="section" style="margin-bottom: 40px;">
               <label class="section-title">題數設定</label>
-              <div class="btn-group">
+              <div class="btn-group" style="flex-wrap: wrap;">
                 <button class="btn ${state.questionCount === 20 ? 'active-green' : ''}" onclick="setQuestionCount(20)">20題</button>
-                <button class="btn ${state.questionCount === 30 ? 'active-green' : ''}" onclick="setQuestionCount(30)">30題</button>
+                <button class="btn ${state.questionCount === 40 ? 'active-green' : ''}" onclick="setQuestionCount(40)">40題</button>
                 <button class="btn ${state.questionCount === 50 ? 'active-green' : ''}" onclick="setQuestionCount(50)">50題</button>
+                <button class="btn ${state.questionCount === 60 ? 'active-green' : ''}" onclick="setQuestionCount(60)">60題</button>
+                <button class="btn ${state.questionCount === 0 ? 'active-green' : ''}" onclick="setQuestionCount(0)">全部</button>
               </div>
             </div>
 
@@ -1356,6 +1353,11 @@
               <span class="time-text">⏱️ 作答時間：${formatTime(timeTaken)}</span>
             </div>
 
+            <div class="btn-group" style="margin-bottom: 12px;">
+              <button class="btn-secondary" onclick="showReview(false)">查看全部答案</button>
+              <button class="btn-secondary" style="border-color: #ef4444; color: #f87171;" onclick="showReview(true)">只看錯題 (${state.questions.length - state.score})</button>
+            </div>
+
             <div class="btn-group">
               <button class="btn-secondary" onclick="goToMenu()">返回選單</button>
               <button class="btn-primary" style="flex: 1; width: auto;" onclick="startQuiz()">再測一次</button>
@@ -1392,6 +1394,105 @@
     function goToMenu() {
       state.mode = 'menu';
       render();
+    }
+
+    // 顯示答案回顧
+    function showReview(wrongOnly = false) {
+      let questionsToShow = [];
+      state.questions.forEach((q, i) => {
+        const userAnswer = state.userAnswers[i];
+        const isCorrect = userAnswer?.isCorrect;
+        if (!wrongOnly || !isCorrect) {
+          questionsToShow.push({ question: q, index: i, userAnswer, isCorrect });
+        }
+      });
+      
+      const title = wrongOnly ? '❌ 錯題回顧' : '📝 答案回顧';
+      const subtitle = wrongOnly 
+        ? `共 ${questionsToShow.length} 題答錯` 
+        : `答對 ${state.score} 題 / 共 ${state.questions.length} 題`;
+      
+      if (wrongOnly && questionsToShow.length === 0) {
+        let html = `
+          <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000; overflow-y: auto; padding: 20px; display: flex; align-items: center; justify-content: center;">
+            <div class="card" style="max-width: 400px; text-align: center;">
+              <div style="font-size: 64px; margin-bottom: 16px;">🎉</div>
+              <h2 style="color: #34d399; margin-bottom: 12px;">太厲害了！</h2>
+              <p style="color: rgba(255,255,255,0.7); margin-bottom: 24px;">全部答對，沒有錯題！</p>
+              <button class="btn-primary" onclick="this.closest('div[style*=fixed]').remove()">關閉</button>
+            </div>
+          </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', html);
+        return;
+      }
+      
+      let html = `
+        <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000; overflow-y: auto; padding: 20px;">
+          <div style="max-width: 800px; margin: 0 auto;">
+            <div class="card">
+              <div class="center" style="margin-bottom: 24px;">
+                <h2 style="color: #fff;">${title}</h2>
+                <p class="subtitle">${subtitle}</p>
+              </div>
+              
+              <div style="max-height: 60vh; overflow-y: auto;">
+      `;
+      
+      questionsToShow.forEach((item) => {
+        const q = item.question;
+        const i = item.index;
+        const userAnswer = item.userAnswer;
+        const isCorrect = item.isCorrect;
+        
+        let correctAnswerText = '';
+        let userAnswerText = '';
+        
+        if (q.type === 'trueFalse') {
+          correctAnswerText = q.answer ? '○ 正確' : '✕ 錯誤';
+          userAnswerText = userAnswer?.answer ? '○ 正確' : '✕ 錯誤';
+        } else {
+          correctAnswerText = `(${q.answer}) ${q.options[q.answer - 1]}`;
+          userAnswerText = userAnswer?.answer ? `(${userAnswer.answer}) ${q.options[userAnswer.answer - 1]}` : '未作答';
+        }
+        
+        html += `
+          <div style="background: ${isCorrect ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)'}; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid ${isCorrect ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'};">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+              <span style="background: ${isCorrect ? '#10b981' : '#ef4444'}; color: white; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">
+                ${i + 1}
+              </span>
+              <span style="color: ${isCorrect ? '#34d399' : '#f87171'}; font-weight: 600;">
+                ${isCorrect ? '✓ 正確' : '✗ 錯誤'}
+              </span>
+              <span style="color: rgba(255,255,255,0.4); font-size: 12px;">
+                ${q.type === 'trueFalse' ? '是非題' : '選擇題'}
+              </span>
+            </div>
+            <p style="color: #fff; margin-bottom: 12px; line-height: 1.6;">${q.question}</p>
+            <div style="font-size: 14px;">
+              <div style="padding: 6px 12px; margin: 4px 0; border-radius: 8px; background: rgba(16,185,129,0.2); color: #34d399;">
+                ✓ 正確答案：${correctAnswerText}
+              </div>
+              ${!isCorrect ? `
+              <div style="padding: 6px 12px; margin: 4px 0; border-radius: 8px; background: rgba(239,68,68,0.2); color: #f87171;">
+                ✗ 你的答案：${userAnswerText}
+              </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      });
+      
+      html += `
+              </div>
+              <button class="btn-primary" onclick="this.closest('div[style*=fixed]').remove()" style="margin-top: 16px;">關閉</button>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.body.insertAdjacentHTML('beforeend', html);
     }
 
     // 初始化
