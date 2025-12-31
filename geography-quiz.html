@@ -26,6 +26,8 @@
     .btn:hover { background: rgba(255, 255, 255, 0.1); }
     .btn.active-blue { border-color: #3b82f6; background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
     .btn.active-green { border-color: #10b981; background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .btn.active-purple { border-color: #8b5cf6; background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+    .btn.active-orange { border-color: #f59e0b; background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
     .btn-primary { width: 100%; padding: 18px 32px; border-radius: 16px; border: none; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; font-size: 18px; font-weight: 700; cursor: pointer; transition: all 0.3s ease; font-family: inherit; margin-top: 16px; }
     .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4); }
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
@@ -242,6 +244,7 @@ let state = {
   screen: 'menu',
   selectedCity: null,
   selectedType: null,
+  questionCount: 40,
   questions: [],
   currentIndex: 0,
   answers: [],
@@ -267,16 +270,30 @@ function formatTime(ms) {
 }
 
 // Question preparation
-function prepareQuestions(city, type) {
+function prepareQuestions(city, type, count) {
   const bank = questionBank[city];
-  let raw = type === 'tf' ? bank.tf : bank.mc;
+  let raw = [];
+  
+  if (type === 'tf') {
+    raw = bank.tf.map(q => ({ ...q, type: 'tf' }));
+  } else if (type === 'mc') {
+    raw = bank.mc.map(q => ({ ...q, type: 'mc' }));
+  } else {
+    // Mixed: combine both
+    raw = [
+      ...bank.tf.map(q => ({ ...q, type: 'tf' })),
+      ...bank.mc.map(q => ({ ...q, type: 'mc' }))
+    ];
+  }
+  
   let shuffled = shuffle(raw);
   
-  // Take first 40 questions
-  let selected = shuffled.slice(0, 40);
+  // Determine how many questions to take
+  let numQuestions = count === 0 ? shuffled.length : Math.min(count, shuffled.length);
+  let selected = shuffled.slice(0, numQuestions);
   
   return selected.map((q, idx) => {
-    if (type === 'tf') {
+    if (q.type === 'tf') {
       return {
         id: idx + 1,
         type: 'tf',
@@ -342,7 +359,7 @@ function renderMenu() {
       </div>
       
       <div class="info-box">
-        <p>📋 測驗說明：每次隨機抽取 <strong>40 題</strong>，每題 2.5 分，總分 100 分。<br>
+        <p>📋 測驗說明：可選擇題型與題數，總分 100 分。<br>
         ⏱️ 無時間限制，<strong>80 分</strong>及格。</p>
       </div>
       
@@ -363,10 +380,21 @@ function renderMenu() {
         <div class="btn-group">
           <button class="btn ${state.selectedType === 'tf' ? 'active-blue' : ''}" data-type="tf">是非題</button>
           <button class="btn ${state.selectedType === 'mc' ? 'active-green' : ''}" data-type="mc">選擇題</button>
+          <button class="btn ${state.selectedType === 'mixed' ? 'active-purple' : ''}" data-type="mixed">綜合</button>
         </div>
       </div>
       
-      <button class="btn-primary" id="startBtn" ${!state.selectedCity || !state.selectedType ? 'disabled' : ''}>
+      <div class="section">
+        <span class="section-title">出題數量</span>
+        <div class="btn-group">
+          <button class="btn ${state.questionCount === 20 ? 'active-orange' : ''}" data-count="20">20題</button>
+          <button class="btn ${state.questionCount === 40 ? 'active-orange' : ''}" data-count="40">40題</button>
+          <button class="btn ${state.questionCount === 60 ? 'active-orange' : ''}" data-count="60">60題</button>
+          <button class="btn ${state.questionCount === 0 ? 'active-orange' : ''}" data-count="0">全部</button>
+        </div>
+      </div>
+      
+      <button class="btn-primary" id="startBtn" ${!state.selectedCity || !state.selectedType || state.questionCount === undefined ? 'disabled' : ''}>
         開始測驗
       </button>
     </div>
@@ -423,7 +451,7 @@ function renderResult() {
   const passed = result.score >= 80;
   const duration = state.endTime - state.startTime;
   const cityName = questionBank[state.selectedCity].name;
-  const typeName = state.selectedType === 'tf' ? '是非題' : '選擇題';
+  const typeName = state.selectedType === 'tf' ? '是非題' : (state.selectedType === 'mc' ? '選擇題' : '綜合題');
   
   return `
     <div class="card">
@@ -497,11 +525,19 @@ function attachEvents() {
     });
   });
   
+  // Count selection
+  document.querySelectorAll('[data-count]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.questionCount = parseInt(btn.dataset.count);
+      render();
+    });
+  });
+  
   // Start button
   const startBtn = document.getElementById('startBtn');
   if (startBtn) {
     startBtn.addEventListener('click', () => {
-      state.questions = prepareQuestions(state.selectedCity, state.selectedType);
+      state.questions = prepareQuestions(state.selectedCity, state.selectedType, state.questionCount);
       state.currentIndex = 0;
       state.answers = [];
       state.screen = 'quiz';
