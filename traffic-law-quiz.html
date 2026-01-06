@@ -1134,11 +1134,21 @@
           type: 'multipleChoice'
         }));
       } else {
-        const allQuestions = [
-          ...trueFalseQuestions.map(q => ({ ...q, type: 'trueFalse' })),
-          ...multipleChoiceQuestions.map(q => ({ ...q, type: 'multipleChoice' }))
-        ];
-        selectedQuestions = shuffleArray(allQuestions).slice(0, count);
+        // 綜合題：是非題與選擇題各半 (1:1 比例)
+        const halfCount = Math.floor(count / 2);
+        const tfCount = halfCount;
+        const mcCount = count - halfCount; // 如果是奇數，選擇題多一題
+        
+        const tfSelected = shuffleArray(trueFalseQuestions).slice(0, tfCount).map(q => ({
+          ...q,
+          type: 'trueFalse'
+        }));
+        const mcSelected = shuffleArray(multipleChoiceQuestions).slice(0, mcCount).map(q => ({
+          ...q,
+          type: 'multipleChoice'
+        }));
+        
+        selectedQuestions = shuffleArray([...tfSelected, ...mcSelected]);
       }
       
       state.questions = selectedQuestions;

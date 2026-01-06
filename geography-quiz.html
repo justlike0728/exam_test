@@ -279,11 +279,48 @@ function prepareQuestions(city, type, count) {
   } else if (type === 'mc') {
     raw = bank.mc.map(q => ({ ...q, type: 'mc' }));
   } else {
-    // Mixed: combine both
-    raw = [
-      ...bank.tf.map(q => ({ ...q, type: 'tf' })),
-      ...bank.mc.map(q => ({ ...q, type: 'mc' }))
-    ];
+    // Mixed: 是非題與選擇題各半 (1:1 比例)
+    const tfRaw = bank.tf.map(q => ({ ...q, type: 'tf' }));
+    const mcRaw = bank.mc.map(q => ({ ...q, type: 'mc' }));
+    
+    // 如果選全部(count=0)，則各取全部
+    let tfCount, mcCount;
+    if (count === 0) {
+      tfCount = tfRaw.length;
+      mcCount = mcRaw.length;
+    } else {
+      const halfCount = Math.floor(count / 2);
+      tfCount = halfCount;
+      mcCount = count - halfCount; // 如果是奇數，選擇題多一題
+    }
+    
+    const tfSelected = shuffle(tfRaw).slice(0, tfCount);
+    const mcSelected = shuffle(mcRaw).slice(0, mcCount);
+    
+    // 直接返回已選好的題目，不再經過下面的 slice
+    const selected = shuffle([...tfSelected, ...mcSelected]);
+    return selected.map((q, idx) => {
+      if (q.type === 'tf') {
+        return {
+          id: idx + 1,
+          type: 'tf',
+          text: q.q,
+          options: ['○ 是 (正確)', '╳ 否 (錯誤)'],
+          correct: q.a ? 0 : 1
+        };
+      } else {
+        const optIndices = [0, 1, 2];
+        const shuffledOpts = shuffle(optIndices);
+        const newCorrect = shuffledOpts.indexOf(q.a - 1);
+        return {
+          id: idx + 1,
+          type: 'mc',
+          text: q.q.replace(/\(1\).*/, '').trim(),
+          options: shuffledOpts.map(i => q.o[i]),
+          correct: newCorrect
+        };
+      }
+    });
   }
   
   let shuffled = shuffle(raw);
