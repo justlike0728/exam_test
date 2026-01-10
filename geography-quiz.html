@@ -252,6 +252,46 @@ let state = {
   endTime: null
 };
 
+// 已出過題目的紀錄 (每個城市分開記錄)
+let usedQuestions = {
+  keelung: { tf: new Set(), mc: new Set() },
+  taipei: { tf: new Set(), mc: new Set() },
+  newtaipei: { tf: new Set(), mc: new Set() },
+  yilan: { tf: new Set(), mc: new Set() },
+  taoyuan: { tf: new Set(), mc: new Set() }
+};
+
+// 智慧抽題函數：優先抽未出過的題目
+function smartSelect(questions, count, usedSet) {
+  const unused = questions.filter(q => !usedSet.has(q.q));
+  const used = questions.filter(q => usedSet.has(q.q));
+  
+  let selected = [];
+  
+  // 優先從未出過的題目抽取
+  if (unused.length >= count) {
+    selected = shuffle(unused).slice(0, count);
+  } else {
+    // 未出過的不夠，全部加入後再從已出過的補足
+    selected = [...shuffle(unused)];
+    const remaining = count - unused.length;
+    if (remaining > 0 && used.length > 0) {
+      selected = [...selected, ...shuffle(used).slice(0, remaining)];
+    }
+  }
+  
+  // 記錄這次出過的題目
+  selected.forEach(q => usedSet.add(q.q));
+  
+  // 如果全部題目都出過了，重置紀錄
+  if (usedSet.size >= questions.length) {
+    usedSet.clear();
+    selected.forEach(q => usedSet.add(q.q));
+  }
+  
+  return selected;
+}
+
 // Utility functions
 function shuffle(arr) {
   const a = [...arr];
@@ -272,12 +312,17 @@ function formatTime(ms) {
 // Question preparation
 function prepareQuestions(city, type, count) {
   const bank = questionBank[city];
+  const cityUsed = usedQuestions[city];
   let raw = [];
   
   if (type === 'tf') {
-    raw = bank.tf.map(q => ({ ...q, type: 'tf' }));
+    const tfRaw = bank.tf.map(q => ({ ...q, type: 'tf' }));
+    const actualCount = count === 0 ? tfRaw.length : Math.min(count, tfRaw.length);
+    raw = smartSelect(tfRaw, actualCount, cityUsed.tf);
   } else if (type === 'mc') {
-    raw = bank.mc.map(q => ({ ...q, type: 'mc' }));
+    const mcRaw = bank.mc.map(q => ({ ...q, type: 'mc' }));
+    const actualCount = count === 0 ? mcRaw.length : Math.min(count, mcRaw.length);
+    raw = smartSelect(mcRaw, actualCount, cityUsed.mc);
   } else {
     // Mixed: 是非題與選擇題各半 (1:1 比例)
     const tfRaw = bank.tf.map(q => ({ ...q, type: 'tf' }));
@@ -290,12 +335,12 @@ function prepareQuestions(city, type, count) {
       mcCount = mcRaw.length;
     } else {
       const halfCount = Math.floor(count / 2);
-      tfCount = halfCount;
-      mcCount = count - halfCount; // 如果是奇數，選擇題多一題
+      tfCount = Math.min(halfCount, tfRaw.length);
+      mcCount = Math.min(count - halfCount, mcRaw.length);
     }
     
-    const tfSelected = shuffle(tfRaw).slice(0, tfCount);
-    const mcSelected = shuffle(mcRaw).slice(0, mcCount);
+    const tfSelected = smartSelect(tfRaw, tfCount, cityUsed.tf);
+    const mcSelected = smartSelect(mcRaw, mcCount, cityUsed.mc);
     
     // 直接返回已選好的題目，不再經過下面的 slice
     const selected = shuffle([...tfSelected, ...mcSelected]);
@@ -323,13 +368,8 @@ function prepareQuestions(city, type, count) {
     });
   }
   
-  let shuffled = shuffle(raw);
-  
-  // Determine how many questions to take
-  let numQuestions = count === 0 ? shuffled.length : Math.min(count, shuffled.length);
-  let selected = shuffled.slice(0, numQuestions);
-  
-  return selected.map((q, idx) => {
+  // 對於是非題或選擇題單獨模式，raw 已經是智慧選取的結果
+  return raw.map((q, idx) => {
     if (q.type === 'tf') {
       return {
         id: idx + 1,
@@ -523,7 +563,10 @@ function renderResult() {
         <button class="btn-secondary" id="reviewBtn">查看全部答案</button>
         <button class="btn-secondary" id="wrongOnlyBtn" style="border-color: #ef4444; color: #f87171;">只看錯題 (${result.wrong})</button>
       </div>
-      <button class="btn-primary" id="retryBtn" style="margin-top: 12px;">重新測驗</button>
+      <div class="btn-group" style="margin-top: 12px;">
+        <button class="btn-secondary" id="retryBtn">返回選單</button>
+        <button class="btn-primary" id="retryAgainBtn">再測一次</button>
+      </div>
     </div>
   `;
 }
@@ -616,7 +659,26 @@ function attachEvents() {
   const retryBtn = document.getElementById('retryBtn');
   if (retryBtn) {
     retryBtn.addEventListener('click', () => {
+      // 返回選單時清除該城市的已出題紀錄
+      if (state.selectedCity && usedQuestions[state.selectedCity]) {
+        usedQuestions[state.selectedCity].tf.clear();
+        usedQuestions[state.selectedCity].mc.clear();
+      }
       state.screen = 'menu';
+      render();
+    });
+  }
+  
+  // Retry Again button (不清除紀錄，繼續測驗)
+  const retryAgainBtn = document.getElementById('retryAgainBtn');
+  if (retryAgainBtn) {
+    retryAgainBtn.addEventListener('click', () => {
+      // 不清除紀錄，直接開始新測驗
+      state.questions = prepareQuestions(state.selectedCity, state.selectedType, state.questionCount);
+      state.currentIndex = 0;
+      state.answers = [];
+      state.screen = 'quiz';
+      startTimer();
       render();
     });
   }

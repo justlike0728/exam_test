@@ -1095,6 +1095,43 @@
       endTime: null
     };
 
+    // 已出過題目的紀錄 (用於「再測一次」時排除)
+    let usedQuestions = {
+      trueFalse: new Set(),
+      multipleChoice: new Set()
+    };
+
+    // 智慧抽題函數：優先抽未出過的題目
+    function smartSelect(questions, count, usedSet) {
+      const unused = questions.filter(q => !usedSet.has(q.id));
+      const used = questions.filter(q => usedSet.has(q.id));
+      
+      let selected = [];
+      
+      // 優先從未出過的題目抽取
+      if (unused.length >= count) {
+        selected = shuffleArray(unused).slice(0, count);
+      } else {
+        // 未出過的不夠，全部加入後再從已出過的補足
+        selected = [...shuffleArray(unused)];
+        const remaining = count - unused.length;
+        if (remaining > 0 && used.length > 0) {
+          selected = [...selected, ...shuffleArray(used).slice(0, remaining)];
+        }
+      }
+      
+      // 記錄這次出過的題目
+      selected.forEach(q => usedSet.add(q.id));
+      
+      // 如果全部題目都出過了，重置紀錄
+      if (usedSet.size >= questions.length) {
+        usedSet.clear();
+        selected.forEach(q => usedSet.add(q.id));
+      }
+      
+      return selected;
+    }
+
     // 工具函數
     function shuffleArray(array) {
       const shuffled = [...array];
@@ -1124,26 +1161,28 @@
       const count = state.questionCount === 0 ? 9999 : state.questionCount;
       
       if (state.quizType === 'trueFalse') {
-        selectedQuestions = shuffleArray(trueFalseQuestions).slice(0, count).map(q => ({
+        const actualCount = Math.min(count, trueFalseQuestions.length);
+        selectedQuestions = smartSelect(trueFalseQuestions, actualCount, usedQuestions.trueFalse).map(q => ({
           ...q,
           type: 'trueFalse'
         }));
       } else if (state.quizType === 'multipleChoice') {
-        selectedQuestions = shuffleArray(multipleChoiceQuestions).slice(0, count).map(q => ({
+        const actualCount = Math.min(count, multipleChoiceQuestions.length);
+        selectedQuestions = smartSelect(multipleChoiceQuestions, actualCount, usedQuestions.multipleChoice).map(q => ({
           ...q,
           type: 'multipleChoice'
         }));
       } else {
         // 綜合題：是非題與選擇題各半 (1:1 比例)
         const halfCount = Math.floor(count / 2);
-        const tfCount = halfCount;
-        const mcCount = count - halfCount; // 如果是奇數，選擇題多一題
+        const tfCount = Math.min(halfCount, trueFalseQuestions.length);
+        const mcCount = Math.min(count - halfCount, multipleChoiceQuestions.length);
         
-        const tfSelected = shuffleArray(trueFalseQuestions).slice(0, tfCount).map(q => ({
+        const tfSelected = smartSelect(trueFalseQuestions, tfCount, usedQuestions.trueFalse).map(q => ({
           ...q,
           type: 'trueFalse'
         }));
-        const mcSelected = shuffleArray(multipleChoiceQuestions).slice(0, mcCount).map(q => ({
+        const mcSelected = smartSelect(multipleChoiceQuestions, mcCount, usedQuestions.multipleChoice).map(q => ({
           ...q,
           type: 'multipleChoice'
         }));
@@ -1404,6 +1443,9 @@
     }
 
     function goToMenu() {
+      // 返回選單時清除已出題紀錄，讓下次重新開始
+      usedQuestions.trueFalse.clear();
+      usedQuestions.multipleChoice.clear();
       state.mode = 'menu';
       render();
     }
