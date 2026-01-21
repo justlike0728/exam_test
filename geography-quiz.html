@@ -258,7 +258,29 @@ let usedQuestions = {
   taipei: { tf: new Set(), mc: new Set() },
   newtaipei: { tf: new Set(), mc: new Set() },
   yilan: { tf: new Set(), mc: new Set() },
-  taoyuan: { tf: new Set(), mc: new Set() }
+  taoyuan: { tf: new Set(), mc: new Set() },
+  allcities: { tf: new Set(), mc: new Set() }
+};
+
+// 動態生成綜合考區題庫 (五區混合)
+const allCitiesTf = [
+  ...questionBank.keelung.tf.map(q => ({ ...q, city: '基隆市' })),
+  ...questionBank.taipei.tf.map(q => ({ ...q, city: '台北市' })),
+  ...questionBank.newtaipei.tf.map(q => ({ ...q, city: '新北市' })),
+  ...questionBank.yilan.tf.map(q => ({ ...q, city: '宜蘭縣' })),
+  ...questionBank.taoyuan.tf.map(q => ({ ...q, city: '桃園市' }))
+];
+const allCitiesMc = [
+  ...questionBank.keelung.mc.map(q => ({ ...q, city: '基隆市' })),
+  ...questionBank.taipei.mc.map(q => ({ ...q, city: '台北市' })),
+  ...questionBank.newtaipei.mc.map(q => ({ ...q, city: '新北市' })),
+  ...questionBank.yilan.mc.map(q => ({ ...q, city: '宜蘭縣' })),
+  ...questionBank.taoyuan.mc.map(q => ({ ...q, city: '桃園市' }))
+];
+questionBank.allcities = {
+  name: '綜合(五區)',
+  tf: allCitiesTf,
+  mc: allCitiesMc
 };
 
 // 智慧抽題函數：優先抽未出過的題目
@@ -424,7 +446,8 @@ function renderMenu() {
     { key: 'taipei', name: '台北市', tf: 90, mc: 88 },
     { key: 'newtaipei', name: '新北市', tf: 80, mc: 79 },
     { key: 'yilan', name: '宜蘭縣', tf: 80, mc: 80 },
-    { key: 'taoyuan', name: '桃園市', tf: 80, mc: 80 }
+    { key: 'taoyuan', name: '桃園市', tf: 80, mc: 80 },
+    { key: 'allcities', name: '綜合(五區)', tf: allCitiesTf.length, mc: allCitiesMc.length }
   ];
   
   return `
@@ -468,6 +491,7 @@ function renderMenu() {
           <button class="btn ${state.questionCount === 40 ? 'active-orange' : ''}" data-count="40">40題</button>
           <button class="btn ${state.questionCount === 50 ? 'active-orange' : ''}" data-count="50">50題</button>
           <button class="btn ${state.questionCount === 60 ? 'active-orange' : ''}" data-count="60">60題</button>
+          <button class="btn ${state.questionCount === 100 ? 'active-orange' : ''}" data-count="100">100題</button>
           <button class="btn ${state.questionCount === 0 ? 'active-orange' : ''}" data-count="0">全部</button>
         </div>
       </div>
