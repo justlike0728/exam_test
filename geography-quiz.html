@@ -346,7 +346,7 @@ function prepareQuestions(city, type, count) {
     const actualCount = count === 0 ? mcRaw.length : Math.min(count, mcRaw.length);
     raw = smartSelect(mcRaw, actualCount, cityUsed.mc);
   } else {
-    // Mixed: 是非題與選擇題各半 (1:1 比例)
+    // Mixed: 是非題 40% + 選擇題 60% (例如50題 = 是非20 + 選擇30)
     const tfRaw = bank.tf.map(q => ({ ...q, type: 'tf' }));
     const mcRaw = bank.mc.map(q => ({ ...q, type: 'mc' }));
     
@@ -356,9 +356,8 @@ function prepareQuestions(city, type, count) {
       tfCount = tfRaw.length;
       mcCount = mcRaw.length;
     } else {
-      const halfCount = Math.floor(count / 2);
-      tfCount = Math.min(halfCount, tfRaw.length);
-      mcCount = Math.min(count - halfCount, mcRaw.length);
+      tfCount = Math.min(Math.floor(count * 0.4), tfRaw.length);
+      mcCount = Math.min(count - tfCount, mcRaw.length);
     }
     
     const tfSelected = smartSelect(tfRaw, tfCount, cityUsed.tf);
@@ -490,7 +489,6 @@ function renderMenu() {
           <button class="btn ${state.questionCount === 20 ? 'active-orange' : ''}" data-count="20">20題</button>
           <button class="btn ${state.questionCount === 40 ? 'active-orange' : ''}" data-count="40">40題</button>
           <button class="btn ${state.questionCount === 50 ? 'active-orange' : ''}" data-count="50">50題</button>
-          <button class="btn ${state.questionCount === 60 ? 'active-orange' : ''}" data-count="60">60題</button>
           <button class="btn ${state.questionCount === 100 ? 'active-orange' : ''}" data-count="100">100題</button>
           <button class="btn ${state.questionCount === 0 ? 'active-orange' : ''}" data-count="0">全部</button>
         </div>

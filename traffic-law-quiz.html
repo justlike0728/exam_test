@@ -1173,10 +1173,9 @@
           type: 'multipleChoice'
         }));
       } else {
-        // 綜合題：是非題與選擇題各半 (1:1 比例)
-        const halfCount = Math.floor(count / 2);
-        const tfCount = Math.min(halfCount, trueFalseQuestions.length);
-        const mcCount = Math.min(count - halfCount, multipleChoiceQuestions.length);
+        // 綜合題：是非題 40% + 選擇題 60% (例如50題 = 是非20 + 選擇30)
+        const tfCount = Math.min(Math.floor(count * 0.4), trueFalseQuestions.length);
+        const mcCount = Math.min(count - tfCount, multipleChoiceQuestions.length);
         
         const tfSelected = smartSelect(trueFalseQuestions, tfCount, usedQuestions.trueFalse).map(q => ({
           ...q,
@@ -1257,7 +1256,6 @@
                 <button class="btn ${state.questionCount === 20 ? 'active-green' : ''}" onclick="setQuestionCount(20)">20題</button>
                 <button class="btn ${state.questionCount === 40 ? 'active-green' : ''}" onclick="setQuestionCount(40)">40題</button>
                 <button class="btn ${state.questionCount === 50 ? 'active-green' : ''}" onclick="setQuestionCount(50)">50題</button>
-                <button class="btn ${state.questionCount === 60 ? 'active-green' : ''}" onclick="setQuestionCount(60)">60題</button>
                 <button class="btn ${state.questionCount === 100 ? 'active-green' : ''}" onclick="setQuestionCount(100)">100題</button>
                 <button class="btn ${state.questionCount === 0 ? 'active-green' : ''}" onclick="setQuestionCount(0)">全部</button>
               </div>
