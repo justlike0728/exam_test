@@ -262,6 +262,72 @@ let usedQuestions = {
   allcities: { tf: new Set(), mc: new Set() }
 };
 
+// ===== 錯題記錄功能 =====
+const WRONG_QUESTIONS_KEY = 'geography_wrongQuestions';
+
+// 從 localStorage 載入錯題
+function loadWrongQuestions() {
+  try {
+    const data = localStorage.getItem(WRONG_QUESTIONS_KEY);
+    return data ? JSON.parse(data) : { tf: [], mc: [] };
+  } catch (e) {
+    return { tf: [], mc: [] };
+  }
+}
+
+// 儲存錯題到 localStorage
+function saveWrongQuestions(wrongQs) {
+  try {
+    localStorage.setItem(WRONG_QUESTIONS_KEY, JSON.stringify(wrongQs));
+  } catch (e) {
+    console.log('無法儲存錯題');
+  }
+}
+
+// 新增錯題
+function addWrongQuestion(question) {
+  const wrongQs = loadWrongQuestions();
+  const list = question.type === 'tf' ? wrongQs.tf : wrongQs.mc;
+  // 用題目文字作為唯一識別 (避免重複)
+  if (!list.find(q => q.text === question.text)) {
+    list.push({
+      text: question.text,
+      options: question.options,
+      correct: question.correct,
+      type: question.type,
+      addedAt: Date.now()
+    });
+    saveWrongQuestions(wrongQs);
+  }
+}
+
+// 移除錯題 (答對時)
+function removeWrongQuestion(questionText, type) {
+  const wrongQs = loadWrongQuestions();
+  if (type === 'tf') {
+    wrongQs.tf = wrongQs.tf.filter(q => q.text !== questionText);
+  } else {
+    wrongQs.mc = wrongQs.mc.filter(q => q.text !== questionText);
+  }
+  saveWrongQuestions(wrongQs);
+}
+
+// 取得錯題數量
+function getWrongCount() {
+  const wrongQs = loadWrongQuestions();
+  return {
+    tf: wrongQs.tf.length,
+    mc: wrongQs.mc.length,
+    total: wrongQs.tf.length + wrongQs.mc.length
+  };
+}
+
+// 清除所有錯題
+function clearAllWrongQuestions() {
+  saveWrongQuestions({ tf: [], mc: [] });
+}
+// ===== 錯題記錄功能結束 =====
+
 // 動態生成綜合考區題庫 (五區混合)
 const allCitiesTf = [
   ...questionBank.keelung.tf.map(q => ({ ...q, city: '基隆市' })),
@@ -449,6 +515,8 @@ function renderMenu() {
     { key: 'allcities', name: '綜合(五區)', tf: allCitiesTf.length, mc: allCitiesMc.length }
   ];
   
+  const wrongCount = getWrongCount();
+  
   return `
     <div class="card">
       <div class="center" style="margin-bottom: 32px;">
@@ -459,6 +527,7 @@ function renderMenu() {
       
       <div class="info-box">
         <p>📋 測驗說明：可選擇題型與題數，總分 100 分。<br>
+        ${wrongCount.total > 0 ? `📝 錯題本：是非 ${wrongCount.tf} 題 ｜ 選擇 ${wrongCount.mc} 題<br>` : ''}
         ⏱️ 無時間限制，<strong>80 分</strong>及格。</p>
       </div>
       
@@ -497,6 +566,15 @@ function renderMenu() {
       <button class="btn-primary" id="startBtn" ${!state.selectedCity || !state.selectedType || state.questionCount === undefined ? 'disabled' : ''}>
         開始測驗
       </button>
+      
+      ${wrongCount.total > 0 ? `
+        <button class="btn-primary" id="wrongQuizBtn" style="margin-top: 12px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+          📝 練習錯題 (${wrongCount.total}題)
+        </button>
+        <button class="btn" id="clearWrongBtn" style="margin-top: 8px; width: 100%; color: rgba(255,255,255,0.5); border-color: rgba(255,255,255,0.2);">
+          清除錯題紀錄
+        </button>
+      ` : ''}
       
       <a href="index.html" style="display: block; text-align: center; margin-top: 20px; color: rgba(255,255,255,0.5); text-decoration: none; font-size: 14px;">← 返回首頁</a>
     </div>
@@ -652,11 +730,80 @@ function attachEvents() {
     });
   }
   
+  // Wrong quiz button (練習錯題)
+  const wrongQuizBtn = document.getElementById('wrongQuizBtn');
+  if (wrongQuizBtn) {
+    wrongQuizBtn.addEventListener('click', () => {
+      const wrongQs = loadWrongQuestions();
+      let questions = [];
+      
+      // 將錯題轉換為題目格式
+      wrongQs.tf.forEach(q => {
+        questions.push({
+          id: questions.length + 1,
+          text: q.text,
+          options: q.options,
+          correct: q.correct,
+          type: 'tf'
+        });
+      });
+      
+      wrongQs.mc.forEach(q => {
+        questions.push({
+          id: questions.length + 1,
+          text: q.text,
+          options: q.options,
+          correct: q.correct,
+          type: 'mc'
+        });
+      });
+      
+      if (questions.length === 0) {
+        alert('沒有錯題可練習！');
+        return;
+      }
+      
+      // 隨機排序
+      questions = shuffle(questions);
+      
+      state.selectedCity = 'allcities'; // 用於顯示
+      state.questions = questions;
+      state.currentIndex = 0;
+      state.answers = [];
+      state.screen = 'quiz';
+      render();
+      startTimer();
+    });
+  }
+  
+  // Clear wrong questions button
+  const clearWrongBtn = document.getElementById('clearWrongBtn');
+  if (clearWrongBtn) {
+    clearWrongBtn.addEventListener('click', () => {
+      if (confirm('確定要清除所有錯題紀錄嗎？')) {
+        clearAllWrongQuestions();
+        render();
+      }
+    });
+  }
+  
   // Option selection
   document.querySelectorAll('[data-option]').forEach(btn => {
     btn.addEventListener('click', () => {
       if (state.answers[state.currentIndex] === undefined) {
-        state.answers[state.currentIndex] = parseInt(btn.dataset.option);
+        const selectedOption = parseInt(btn.dataset.option);
+        state.answers[state.currentIndex] = selectedOption;
+        
+        // 記錄錯題或移除正確的題目
+        const currentQ = state.questions[state.currentIndex];
+        if (selectedOption === currentQ.correct) {
+          // 答對，從錯題本移除
+          removeWrongQuestion(currentQ.text, currentQ.type);
+        } else {
+          // 答錯，加入錯題本
+          addWrongQuestion(currentQ);
+        }
+        
         render();
       }
     });

@@ -1101,6 +1101,72 @@
       multipleChoice: new Set()
     };
 
+    // ===== 錯題記錄功能 =====
+    const WRONG_QUESTIONS_KEY = 'trafficLaw_wrongQuestions';
+    
+    // 從 localStorage 載入錯題
+    function loadWrongQuestions() {
+      try {
+        const data = localStorage.getItem(WRONG_QUESTIONS_KEY);
+        return data ? JSON.parse(data) : { trueFalse: [], multipleChoice: [] };
+      } catch (e) {
+        return { trueFalse: [], multipleChoice: [] };
+      }
+    }
+    
+    // 儲存錯題到 localStorage
+    function saveWrongQuestions(wrongQs) {
+      try {
+        localStorage.setItem(WRONG_QUESTIONS_KEY, JSON.stringify(wrongQs));
+      } catch (e) {
+        console.log('無法儲存錯題');
+      }
+    }
+    
+    // 新增錯題
+    function addWrongQuestion(question, type) {
+      const wrongQs = loadWrongQuestions();
+      const list = type === 'trueFalse' ? wrongQs.trueFalse : wrongQs.multipleChoice;
+      // 避免重複加入
+      if (!list.find(q => q.id === question.id)) {
+        list.push({
+          id: question.id,
+          question: question.question,
+          answer: question.answer,
+          options: question.options || null,
+          addedAt: Date.now()
+        });
+        saveWrongQuestions(wrongQs);
+      }
+    }
+    
+    // 移除錯題 (答對時)
+    function removeWrongQuestion(questionId, type) {
+      const wrongQs = loadWrongQuestions();
+      if (type === 'trueFalse') {
+        wrongQs.trueFalse = wrongQs.trueFalse.filter(q => q.id !== questionId);
+      } else {
+        wrongQs.multipleChoice = wrongQs.multipleChoice.filter(q => q.id !== questionId);
+      }
+      saveWrongQuestions(wrongQs);
+    }
+    
+    // 取得錯題數量
+    function getWrongCount() {
+      const wrongQs = loadWrongQuestions();
+      return {
+        trueFalse: wrongQs.trueFalse.length,
+        multipleChoice: wrongQs.multipleChoice.length,
+        total: wrongQs.trueFalse.length + wrongQs.multipleChoice.length
+      };
+    }
+    
+    // 清除所有錯題
+    function clearAllWrongQuestions() {
+      saveWrongQuestions({ trueFalse: [], multipleChoice: [] });
+    }
+    // ===== 錯題記錄功能結束 =====
+
     // 智慧抽題函數：優先抽未出過的題目
     function smartSelect(questions, count, usedSet) {
       const unused = questions.filter(q => !usedSet.has(q.id));
@@ -1214,6 +1280,11 @@
       
       if (isCorrect) {
         state.score++;
+        // 答對時，從錯題本移除（如果存在）
+        removeWrongQuestion(current.id, current.type);
+      } else {
+        // 答錯時，加入錯題本
+        addWrongQuestion(current, current.type);
       }
       render();
     }
@@ -1232,6 +1303,7 @@
 
     // 渲染選單
     function renderMenu() {
+      const wrongCount = getWrongCount();
       return `
         <div class="flex-center">
           <div class="card max-width-500">
@@ -1262,10 +1334,20 @@
             </div>
 
             <button class="btn-primary" onclick="startQuiz()">開始測驗 →</button>
+            
+            ${wrongCount.total > 0 ? `
+              <button class="btn-primary" style="margin-top: 12px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);" onclick="startWrongQuiz()">
+                📝 練習錯題 (${wrongCount.total}題)
+              </button>
+              <button class="btn" style="margin-top: 8px; width: 100%; color: rgba(255,255,255,0.5); border-color: rgba(255,255,255,0.2);" onclick="confirmClearWrong()">
+                清除錯題紀錄
+              </button>
+            ` : ''}
 
             <div class="info-box">
               <p class="info-text">
                 📋 題庫：是非題 ${trueFalseQuestions.length} 題 ｜ 選擇題 ${multipleChoiceQuestions.length} 題<br>
+                ${wrongCount.total > 0 ? `📝 錯題本：是非 ${wrongCount.trueFalse} 題 ｜ 選擇 ${wrongCount.multipleChoice} 題<br>` : ''}
                 ⚠️ 及格標準：<strong style="color:#f59e0b">80分以上</strong>
               </p>
             </div>
@@ -1447,6 +1529,58 @@
       usedQuestions.multipleChoice.clear();
       state.mode = 'menu';
       render();
+    }
+
+    // 開始錯題練習
+    function startWrongQuiz() {
+      const wrongQs = loadWrongQuestions();
+      let selectedQuestions = [];
+      
+      // 將錯題轉換為題目格式
+      wrongQs.trueFalse.forEach(q => {
+        selectedQuestions.push({
+          id: q.id,
+          question: q.question,
+          answer: q.answer,
+          type: 'trueFalse'
+        });
+      });
+      
+      wrongQs.multipleChoice.forEach(q => {
+        selectedQuestions.push({
+          id: q.id,
+          question: q.question,
+          answer: q.answer,
+          options: q.options,
+          type: 'multipleChoice'
+        });
+      });
+      
+      if (selectedQuestions.length === 0) {
+        alert('沒有錯題可練習！');
+        return;
+      }
+      
+      // 隨機排序
+      selectedQuestions = shuffleArray(selectedQuestions);
+      
+      state.questions = selectedQuestions;
+      state.currentIndex = 0;
+      state.userAnswers = {};
+      state.showAnswer = false;
+      state.score = 0;
+      state.startTime = Date.now();
+      state.endTime = null;
+      state.mode = 'quiz';
+      render();
+    }
+    
+    // 確認清除錯題
+    function confirmClearWrong() {
+      if (confirm('確定要清除所有錯題紀錄嗎？')) {
+        clearAllWrongQuestions();
+        render();
+      }
     }
 
     // 顯示答案回顧
