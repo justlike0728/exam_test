@@ -1451,6 +1451,14 @@
       const { grade, color, emoji } = getGrade(percentage);
       const timeTaken = state.endTime - state.startTime;
       const passed = percentage >= 80;
+      
+      // 計算練習進度
+      const tfUsed = usedQuestions.trueFalse.size;
+      const tfTotal = trueFalseQuestions.length;
+      const tfRemain = tfTotal - tfUsed;
+      const mcUsed = usedQuestions.multipleChoice.size;
+      const mcTotal = multipleChoiceQuestions.length;
+      const mcRemain = mcTotal - mcUsed;
 
       return `
         <div class="flex-center">
@@ -1483,6 +1491,15 @@
 
             <div class="time-box">
               <span class="time-text">⏱️ 作答時間：${formatTime(timeTaken)}</span>
+            </div>
+            
+            <div style="margin: 16px 0; padding: 16px; background: rgba(99, 102, 241, 0.1); border-radius: 12px; border: 1px solid rgba(99, 102, 241, 0.3);">
+              <div style="color: #a5b4fc; font-weight: 600; margin-bottom: 8px;">📊 練習進度</div>
+              <div style="color: rgba(255,255,255,0.8); font-size: 14px; line-height: 1.8;">
+                是非題：${tfUsed} / ${tfTotal} 題 <span style="color: ${tfRemain > 0 ? '#fbbf24' : '#34d399'};">(剩餘 ${tfRemain} 題)</span><br>
+                選擇題：${mcUsed} / ${mcTotal} 題 <span style="color: ${mcRemain > 0 ? '#fbbf24' : '#34d399'};">(剩餘 ${mcRemain} 題)</span>
+              </div>
+              ${tfRemain === 0 && mcRemain === 0 ? '<div style="color: #34d399; font-size: 13px; margin-top: 8px;">✅ 全部題目都練習過了！再測一次將重新開始</div>' : ''}
             </div>
 
             <div class="btn-group" style="margin-bottom: 12px;">
