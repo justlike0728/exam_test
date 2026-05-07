@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>模擬正式考試 - 計程車執業登記證</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: "Microsoft JhengHei", "Noto Sans TC", sans-serif; 
+      min-height: 100vh; 
+      background: linear-gradient(135deg, #7c2d12 0%, #1c1917 50%, #292524 100%);
+      color: #fff;
+    }
+    
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; min-height: 100vh; }
+    .flex-center { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      border-radius: 24px;
+      padding: 32px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      width: 100%;
+      max-width: 550px;
+    }
+    
+    .center { text-align: center; }
+    .icon-large { font-size: 64px; margin-bottom: 16px; }
+    .icon-xlarge { font-size: 80px; margin-bottom: 16px; }
+    h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+    h2 { font-size: 22px; font-weight: 600; margin-bottom: 12px; }
+    .subtitle { color: rgba(255,255,255,0.6); font-size: 15px; margin-bottom: 24px; }
+    
+    .info-box {
+      background: rgba(251, 146, 60, 0.1);
+      border: 1px solid rgba(251, 146, 60, 0.3);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+    .info-box p { color: rgba(255,255,255,0.8); font-size: 14px; line-height: 1.8; }
+    
+    .exam-info {
+      background: rgba(255,255,255,0.05);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    .exam-info-title { 
+      color: #fb923c; 
+      font-weight: 600; 
+      font-size: 16px; 
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .exam-info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .exam-info-item {
+      background: rgba(255,255,255,0.05);
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+    }
+    .exam-info-label { color: rgba(255,255,255,0.5); font-size: 12px; margin-bottom: 4px; }
+    .exam-info-value { color: #fff; font-size: 18px; font-weight: 600; }
+    
+    .btn-primary {
+      width: 100%;
+      padding: 16px 24px;
+      background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(234, 88, 12, 0.4); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    
+    .btn-secondary {
+      flex: 1;
+      padding: 14px 20px;
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.15); }
+    
+    .btn-group { display: flex; gap: 12px; margin-top: 12px; }
+    
+    .section { margin-bottom: 24px; }
+    .section-title {
+      display: block;
+      color: rgba(255,255,255,0.7);
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 12px;
+    }
+    
+    .city-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .city-btn {
+      padding: 12px 8px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    .city-btn:hover { background: rgba(255,255,255,0.1); }
+    .city-btn.active { 
+      background: rgba(16, 185, 129, 0.2); 
+      border-color: #10b981; 
+      color: #34d399;
+    }
+    
+    /* Quiz styles */
+    .quiz-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .quiz-progress { color: rgba(255,255,255,0.6); font-size: 14px; }
+    .quiz-timer { 
+      background: rgba(251, 146, 60, 0.2);
+      color: #fb923c;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .quiz-subject {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .subject-traffic { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+    .subject-geography { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 3px;
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #ea580c, #fb923c);
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+    
+    .question-type {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .type-tf { background: rgba(99, 102, 241, 0.2); color: #a5b4fc; }
+    .type-mc { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
+    
+    .question-text {
+      font-size: 18px;
+      line-height: 1.7;
+      color: #fff;
+      margin-bottom: 24px;
+    }
+    
+    .options { display: flex; flex-direction: column; gap: 12px; }
+    .option-btn {
+      padding: 16px 20px;
+      background: rgba(255,255,255,0.05);
+      border: 2px solid rgba(255,255,255,0.15);
+      border-radius: 12px;
+      color: #fff;
+      font-size: 16px;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .option-btn:hover:not(:disabled) { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); }
+    .option-btn.selected { background: rgba(251, 146, 60, 0.2); border-color: #fb923c; }
+    .option-btn.correct { background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #34d399; }
+    .option-btn.wrong { background: rgba(239, 68, 68, 0.2); border-color: #ef4444; color: #f87171; }
+    .option-btn:disabled { cursor: default; }
+    
+    .answer-feedback {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 12px;
+      font-size: 15px;
+    }
+    .feedback-correct { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; }
+    .feedback-wrong { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; }
+    
+    .nav-btn {
+      margin-top: 20px;
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav-btn:hover { opacity: 0.9; }
+    
+    /* Result styles */
+    .result-score {
+      font-size: 72px;
+      font-weight: 700;
+      margin: 16px 0;
+    }
+    .result-pass { color: #34d399; }
+    .result-fail { color: #f87171; }
+    
+    .result-badge {
+      display: inline-block;
+      padding: 8px 24px;
+      border-radius: 30px;
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+    .badge-pass { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .badge-fail { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+    
+    .score-breakdown {
+      background: rgba(255,255,255,0.05);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .score-breakdown-title {
+      color: rgba(255,255,255,0.7);
+      font-size: 14px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .score-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .score-row:last-child { border-bottom: none; }
+    .score-label { color: rgba(255,255,255,0.8); font-size: 15px; }
+    .score-value { font-weight: 600; font-size: 18px; }
+    .score-traffic { color: #60a5fa; }
+    .score-geography { color: #34d399; }
+    .score-average { color: #fb923c; font-size: 22px; }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .stat-box {
+      padding: 16px;
+      border-radius: 12px;
+      text-align: center;
+    }
+    .stat-box-correct { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); }
+    .stat-box-wrong { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); }
+    .stat-number { font-size: 32px; font-weight: 700; }
+    .stat-number-correct { color: #34d399; }
+    .stat-number-wrong { color: #f87171; }
+    .stat-label { color: rgba(255,255,255,0.6); font-size: 13px; margin-top: 4px; }
+    
+    .time-box {
+      background: rgba(255,255,255,0.05);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 20px;
+    }
+    .time-text { color: rgba(255,255,255,0.7); font-size: 14px; }
+    
+    /* Review modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .modal-content {
+      background: #1c1917;
+      border-radius: 20px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 24px;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .modal-title { font-size: 20px; font-weight: 600; }
+    .modal-close {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.6);
+      font-size: 28px;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+    }
+    .modal-close:hover { color: #fff; }
+    
+    .review-item {
+      background: rgba(255,255,255,0.03);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .review-item.correct { border-left: 3px solid #10b981; }
+    .review-item.wrong { border-left: 3px solid #ef4444; }
+    .review-question { font-size: 15px; line-height: 1.6; margin-bottom: 12px; }
+    .review-answer { font-size: 14px; color: rgba(255,255,255,0.7); }
+    .review-answer strong { color: #34d399; }
+    .review-answer .user-wrong { color: #f87171; }
+    
+    @media (max-width: 500px) {
+      .card { padding: 20px; }
+      .city-grid { grid-template-columns: repeat(2, 1fr); }
+      .question-text { font-size: 16px; }
+      .result-score { font-size: 56px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="app"></div>
+
+  <script>
+    // ===== 題庫資料 =====
+    // 交通法令題庫 (從 traffic-law-quiz.html 載入)
+    const trafficTrueFalse = [
+      {id:1,question:"臨時停車係指車輛因上、下人、客、裝卸物品,其引擎未熄火,停止時間未滿10分鐘,保持立即行駛之狀態。",answer:false},
+      {id:2,question:"為維護道路交通安全與暢通,警察機關於必要時,得指定某線道路禁止車輛通行。",answer:true},
+      {id:3,question:"為維護道路交通安全與暢通,警察機關於必要時,得禁止停車及臨時停車。",answer:true},
+      {id:4,question:"道路因遇突發事故,足使交通陷於停滯時,執行交通勤務之警察,得調撥車道讓車輛通行。",answer:true},
+      {id:5,question:"違規停車之取締,不得由交通助理人員逕行執行之。",answer:false},
+      {id:6,question:"汽車駕駛人闖平交道,不得逕行舉發。",answer:false},
+      {id:7,question:"汽車駕駛人搶越行人穿越道,得逕行舉發。",answer:true},
+      {id:8,question:"汽車駕駛人違規停車,經各級學校交通服務隊現場導護人員簽證檢舉者,得逕行舉發。",answer:true},
+      {id:9,question:"汽車駕駛人聞救護車之警號不立即避讓者,得逕行舉發。",answer:true},
+      {id:10,question:"經以科學儀器取得證據資料證明汽車駕駛人行為違規者,得逕行舉發。",answer:true},
+      {id:11,question:"汽車駕駛人違規超車之行為,不得以移動式相機取得之證據,據以逕行舉發。",answer:false},
+      {id:12,question:"汽車駕駛人未依規定變換車道之違規行為,不得以移動式相機取得之證據,據以逕行舉發。",answer:false},
+      {id:13,question:"汽車駕駛人行車超速之違規行為,不得以移動式相機取得之證據,據以逕行舉發。",answer:false},
+      {id:14,question:"汽車駕駛人未依規定繫安全帶之違規行為,不得以移動式相機取得之証據,據以逕行舉發。",answer:false},
+      {id:15,question:"交通違規之受處罰人接獲違反道路交通管理事件通知單後,不服舉發事實者,應於30日內,向處罰機關陳述意見。",answer:true},
+      {id:16,question:"交通違規之受處罰人未依通知所定期限前往指定處所聽候裁決,且未依規定期限繳納罰鍰結案者,處罰機關得逕行裁決之。",answer:true},
+      {id:17,question:"汽車駕駛人未繳清其所有違反道路交通管理處罰條例之罰鍰前,不得向公路監理機關辦理各項登記。",answer:true},
+      {id:18,question:"車輛駕駛人違反道路交通管理處罰條例,依法應負刑事責任者,一律移送該管地方法院檢察署處理。",answer:true},
+      {id:19,question:"報廢登記之汽車仍行駛者,除罰鍰及禁止行駛外,其車輛並沒入之。",answer:true},
+      {id:20,question:"變造汽車牌照,使不能辨認其牌號,處汽車所有人新臺幣2,400元以上,4,800元以下罰鍰,並責令申請換領牌照。",answer:true},
+      {id:21,question:"塗改客車車身標明之載客人數,與原核定數量不符,處汽車所有人新臺幣2,400元以上,4,800元以下罰鍰,並責令改正。",answer:true},
+      {id:22,question:"引擎號碼,與原登記位置不符,處汽車駕駛人新臺幣2,400元以上4,800元以下罰鍰,並責令申改正。",answer:false},
+      {id:23,question:"牌照遺失,不報請公路主管機關補發,處汽車所有人新臺幣300元以上600元以下罰鍰,並可禁止其行駛。",answer:true},
+      {id:24,question:"號牌污穢,非行車途中因遇雨、雪道路泥濘所致,處汽車所有人新臺幣300元以上600元以下罰鍰,並責令改正。",answer:true},
+      {id:25,question:"計程車應裝置自動計費器、車頂燈、執業登記證插座,缺一不可。",answer:true},
+      {id:26,question:"計程車不可在前、後兩邊玻璃門上黏貼不透明反光紙。",answer:true},
+      {id:27,question:"汽車逾期2個月以上未參加定期檢驗者,除依規定罰鍰外,並吊扣其牌照,至檢驗合格後發還。",answer:false},
+      {id:28,question:"汽車逾期6個月以上未參加定期檢驗者,除依規定罰鍰外,並註銷其牌照。",answer:true},
+      {id:29,question:"經檢驗不合格之汽車,於3個月內仍未修復並申請覆驗,或覆驗仍不合格者,吊扣其牌照。",answer:false},
+      {id:30,question:"汽車因交通事故遭受重大損壞修復後,應申請公路主管機關施行臨時檢驗。",answer:true},
+      {id:31,question:"汽車所有人在1年內違反「應施行臨時檢驗」規定2次以上者,除依規定罰鍰外,並吊扣牌照3個月。",answer:true},
+      {id:32,question:"駕駛執照業經吊銷、註銷仍駕車之違規,駕駛執照應扣繳之。",answer:true},
+      {id:33,question:"駕駛執照吊扣期間駕車之違規,應吊銷其駕駛執照。",answer:true},
+      {id:34,question:"汽車駕駛人闖越平交道,應接受道路交通安全講習。",answer:true},
+      {id:35,question:"公路主管機關對於道路交通法規之重大修正,必要時得通知職業汽車駕駛人參加道路交通安全講習。",answer:true},
+      {id:36,question:"汽車駕駛人違規,依規定需受講習,無故不到者處罰鍰。經再通知依限參加講習,逾期6個月以上仍不參加者,吊扣其駕駛執照6個月。",answer:true},
+      {id:37,question:"職業汽車駕駛人,不依規定期限參加駕駛執照審驗,逾期半年以上者,逕行註銷其駕駛執照。",answer:false},
+      {id:38,question:"因未參加駕駛執照審驗,經逕行註銷駕駛執照之職業汽車駕駛人,得申請換發同等車類之普通駕駛執照。",answer:true},
+      {id:39,question:"在設有禁止變換車道線之路段,可以迴車載客。",answer:false},
+      {id:40,question:"汽車駕駛人於行駛道路時,以手持方式使用行動電話、電腦或其他相類功能裝置進行撥接、通話、數據通訊或其他有礙駕駛安全之行為者,處新臺幣3,000元罰鍰。",answer:true}
+    ];
+    
+    const trafficMultipleChoice = [
+      {id:1,question:"下列何種燈號,車輛應減速接近,先停止於交岔路口前,讓幹道車優先通行後,認為安全時方得續行?",options:["閃光綠燈","閃光黃燈","閃光紅燈"],answer:3},
+      {id:2,question:"交通違規案件駕駛人或行為人,收到違反道路交通管理事件通知單,若不服舉發事實者,應在幾日內,向處罰機關陳述意見?",options:["15日","30日","60日"],answer:2},
+      {id:3,question:"牌照遺失,不報請公路主管機關補發,處汽車所有人罰鍰多少元?",options:["600-1,200元","300-600元","900-1,800元"],answer:2},
+      {id:4,question:"計程車執業登記證未依規定安置車內指定之插座者,處新臺幣多少元?",options:["1,500元","3,000元","900元"],answer:1},
+      {id:5,question:"汽車駕駛人違反道路交通管理,受吊銷駕駛執照處分,應於幾年內不得考領駕駛執照?",options:["1年","2年","3年"],answer:3},
+      {id:6,question:"計程車駕駛人不依規定辦理執業登記,經處罰仍不辦理者,處以何種處罰?",options:["吊扣駕照","吊銷駕照","罰鍰"],answer:2},
+      {id:7,question:"計程車駕駛人任意拒載乘客者,處新臺幣多少元罰鍰?",options:["300-600元","600-1,200元","1,500-3,000元"],answer:2},
+      {id:8,question:"汽車駕駛人連續駕車超過8小時,如應歸責於汽車所有人者,吊扣其汽車牌照多久?",options:["1個月","2個月","3個月"],answer:3},
+      {id:9,question:"汽車駕駛人行經有燈光號誌管制之交岔路口闖紅燈者,處新臺幣多少元罰鍰?",options:["1,800-5,400元","600-1,800元","3,000-6,000元"],answer:1},
+      {id:10,question:"汽車駕駛人於行駛道路時,使用手持式行動電話進行撥接或通話,處新臺幣多少元罰鍰?",options:["1,000元","2,000元","3,000元"],answer:3},
+      {id:11,question:"汽車駕駛人駕駛汽車違反道路交通安全規則,因而肇事致人受傷者,記違規點數幾點?",options:["1點","2點","3點"],answer:3},
+      {id:12,question:"汽車駕駛人拒絕接受酒精測試之檢定,處新臺幣多少元罰鍰?",options:["9萬元","18萬元","36萬元"],answer:2},
+      {id:13,question:"職業駕駛人之駕駛執照,應自發照之日起,每滿幾年審驗1次?",options:["1年","2年","3年"],answer:3},
+      {id:14,question:"計程車駕駛人執業登記事項如有異動,應於事實發生後幾日內辦理申報?",options:["7日","15日","30日"],answer:2},
+      {id:15,question:"申請個人計程車行者之資格,年齡需在幾歲以上?",options:["25歲","30歲","35歲"],answer:2},
+      {id:16,question:"汽車行駛高速公路,車速每小時90公里時,安全距離應保持多少公尺以上?",options:["30公尺","45公尺","60公尺"],answer:2},
+      {id:17,question:"汽車駕駛人在6個月內,違規記點共達幾點以上者,吊扣駕駛執照1個月?",options:["3點","6點","12點"],answer:2},
+      {id:18,question:"行車速度,在市區道路無速限標誌者,時速不得超過多少公里?",options:["40公里","50公里","60公里"],answer:2},
+      {id:19,question:"在設有快慢車道分隔線之慢車道,時速不得超過多少公里?",options:["30公里","40公里","50公里"],answer:2},
+      {id:20,question:"交岔路口幾公尺內不得臨時停車?",options:["5公尺","10公尺","15公尺"],answer:2},
+      {id:21,question:"消防車出入口幾公尺內不得臨時停車?",options:["3公尺","5公尺","10公尺"],answer:2},
+      {id:22,question:"公共汽車招呼站幾公尺內不得臨時停車?",options:["5公尺","10公尺","15公尺"],answer:2},
+      {id:23,question:"汽車行近鐵路平交道,應即將時速減低至多少公里以下?",options:["10公里","15公里","20公里"],answer:2},
+      {id:24,question:"右轉彎時,應距交岔路口多少公尺前顯示方向燈?",options:["20公尺","30公尺","50公尺"],answer:2},
+      {id:25,question:"左轉彎時,應距交岔路口多少公尺前顯示方向燈?",options:["20公尺","30公尺","50公尺"],answer:2},
+      {id:26,question:"汽車臨時停車時,其右側前後輪胎外距離緣石不得逾多少公分?",options:["40公分","50公分","60公分"],answer:3},
+      {id:27,question:"計程車駕駛人停止執業繳回執業登記證,保留執業資格多久?",options:["1年","2年","3年"],answer:2},
+      {id:28,question:"執業登記證每幾年換發1次?",options:["1年","2年","3年"],answer:3},
+      {id:29,question:"計程車駕駛人受僱情形如有異動,應於幾日內申報?",options:["7日","15日","30日"],answer:2},
+      {id:30,question:"發生道路交通事故地點在高速公路時,應於距離事故地點後方多少公尺處豎立車輛故障標誌?",options:["50公尺","100公尺","150公尺"],answer:2}
+    ];
+    
+    // 地理環境題庫 (簡化版 - 從五區各抽取)
+    const geographyTrueFalse = [
+      {id:1,question:"基隆市仁愛區為基隆市政府所在地。",answer:true,city:"基隆市"},
+      {id:2,question:"基隆港是台灣北部最大的港口。",answer:true,city:"基隆市"},
+      {id:3,question:"八斗子漁港位於基隆市中正區。",answer:true,city:"基隆市"},
+      {id:4,question:"基隆火車站位於基隆市七堵區。",answer:false,city:"基隆市"},
+      {id:5,question:"台北市政府位於信義區。",answer:true,city:"台北市"},
+      {id:6,question:"台北101大樓位於台北市大安區。",answer:false,city:"台北市"},
+      {id:7,question:"台北車站位於台北市中正區。",answer:true,city:"台北市"},
+      {id:8,question:"松山機場位於台北市松山區。",answer:true,city:"台北市"},
+      {id:9,question:"新北市政府位於板橋區。",answer:true,city:"新北市"},
+      {id:10,question:"淡水老街位於新北市淡水區。",answer:true,city:"新北市"},
+      {id:11,question:"九份位於新北市瑞芳區。",answer:true,city:"新北市"},
+      {id:12,question:"林口長庚醫院位於新北市林口區。",answer:true,city:"新北市"},
+      {id:13,question:"宜蘭縣政府位於宜蘭市。",answer:true,city:"宜蘭縣"},
+      {id:14,question:"羅東夜市位於宜蘭縣宜蘭市。",answer:false,city:"宜蘭縣"},
+      {id:15,question:"礁溪溫泉位於宜蘭縣礁溪鄉。",answer:true,city:"宜蘭縣"},
+      {id:16,question:"蘇澳港是宜蘭縣重要的漁港。",answer:true,city:"宜蘭縣"},
+      {id:17,question:"桃園國際機場位於桃園市大園區。",answer:true,city:"桃園市"},
+      {id:18,question:"桃園市政府位於桃園區。",answer:true,city:"桃園市"},
+      {id:19,question:"中壢火車站位於桃園市中壢區。",answer:true,city:"桃園市"},
+      {id:20,question:"石門水庫位於桃園市大溪區。",answer:true,city:"桃園市"},
+      {id:21,question:"基隆廟口夜市位於基隆市仁愛區。",answer:true,city:"基隆市"},
+      {id:22,question:"台北小巨蛋位於台北市南港區。",answer:false,city:"台北市"},
+      {id:23,question:"板橋車站是新北市重要的交通樞紐。",answer:true,city:"新北市"},
+      {id:24,question:"宜蘭傳統藝術中心位於五結鄉。",answer:true,city:"宜蘭縣"},
+      {id:25,question:"桃園高鐵站位於桃園市中壢區。",answer:false,city:"桃園市"},
+      {id:26,question:"和平島位於基隆市中正區。",answer:true,city:"基隆市"},
+      {id:27,question:"故宮博物院位於台北市士林區。",answer:true,city:"台北市"},
+      {id:28,question:"三峽老街位於新北市三峽區。",answer:true,city:"新北市"},
+      {id:29,question:"冬山河位於宜蘭縣冬山鄉。",answer:true,city:"宜蘭縣"},
+      {id:30,question:"大溪老街位於桃園市大溪區。",answer:true,city:"桃園市"},
+      {id:31,question:"基隆市有七個行政區。",answer:true,city:"基隆市"},
+      {id:32,question:"台北市有12個行政區。",answer:true,city:"台北市"},
+      {id:33,question:"新北市是全台灣人口最多的縣市。",answer:true,city:"新北市"},
+      {id:34,question:"宜蘭縣與台北市相鄰。",answer:false,city:"宜蘭縣"},
+      {id:35,question:"桃園市與新竹縣相鄰。",answer:true,city:"桃園市"},
+      {id:36,question:"中正公園是基隆市著名的觀光景點。",answer:true,city:"基隆市"},
+      {id:37,question:"西門町位於台北市萬華區。",answer:true,city:"台北市"},
+      {id:38,question:"烏來風景區位於新北市烏來區。",answer:true,city:"新北市"},
+      {id:39,question:"太平山位於宜蘭縣大同鄉。",answer:true,city:"宜蘭縣"},
+      {id:40,question:"拉拉山位於桃園市復興區。",answer:true,city:"桃園市"}
+    ];
+    
+    const geographyMultipleChoice = [
+      {id:1,question:"基隆市政府位於哪一區?",options:["仁愛區","中正區","信義區"],answer:1,city:"基隆市"},
+      {id:2,question:"基隆港屬於哪一種港口?",options:["漁港","商港","軍港"],answer:2,city:"基隆市"},
+      {id:3,question:"基隆市共有幾個行政區?",options:["5區","6區","7區"],answer:3,city:"基隆市"},
+      {id:4,question:"基隆火車站位於哪一區?",options:["仁愛區","中山區","七堵區"],answer:1,city:"基隆市"},
+      {id:5,question:"台北101大樓位於哪一區?",options:["大安區","信義區","中正區"],answer:2,city:"台北市"},
+      {id:6,question:"台北市政府位於哪一區?",options:["中正區","大安區","信義區"],answer:3,city:"台北市"},
+      {id:7,question:"台北車站位於哪一區?",options:["中正區","大同區","萬華區"],answer:1,city:"台北市"},
+      {id:8,question:"故宮博物院位於台北市哪一區?",options:["中山區","士林區","北投區"],answer:2,city:"台北市"},
+      {id:9,question:"新北市政府位於哪一區?",options:["中和區","永和區","板橋區"],answer:3,city:"新北市"},
+      {id:10,question:"九份老街位於新北市哪一區?",options:["瑞芳區","平溪區","雙溪區"],answer:1,city:"新北市"},
+      {id:11,question:"淡水漁人碼頭位於新北市哪一區?",options:["八里區","淡水區","三芝區"],answer:2,city:"新北市"},
+      {id:12,question:"野柳地質公園位於新北市哪一區?",options:["金山區","萬里區","瑞芳區"],answer:2,city:"新北市"},
+      {id:13,question:"宜蘭縣政府位於哪裡?",options:["羅東鎮","宜蘭市","蘇澳鎮"],answer:2,city:"宜蘭縣"},
+      {id:14,question:"羅東夜市位於宜蘭縣哪裡?",options:["宜蘭市","羅東鎮","礁溪鄉"],answer:2,city:"宜蘭縣"},
+      {id:15,question:"礁溪溫泉位於宜蘭縣哪裡?",options:["礁溪鄉","頭城鎮","壯圍鄉"],answer:1,city:"宜蘭縣"},
+      {id:16,question:"蘭陽博物館位於宜蘭縣哪裡?",options:["宜蘭市","頭城鎮","礁溪鄉"],answer:2,city:"宜蘭縣"},
+      {id:17,question:"桃園國際機場位於哪一區?",options:["桃園區","大園區","蘆竹區"],answer:2,city:"桃園市"},
+      {id:18,question:"桃園市政府位於哪一區?",options:["中壢區","桃園區","八德區"],answer:2,city:"桃園市"},
+      {id:19,question:"桃園高鐵站位於哪一區?",options:["桃園區","中壢區","蘆竹區"],answer:2,city:"桃園市"},
+      {id:20,question:"石門水庫位於桃園市哪一區?",options:["復興區","大溪區","龍潭區"],answer:2,city:"桃園市"},
+      {id:21,question:"基隆廟口夜市位於哪一區?",options:["仁愛區","中正區","信義區"],answer:1,city:"基隆市"},
+      {id:22,question:"台北小巨蛋位於哪一區?",options:["松山區","南港區","信義區"],answer:1,city:"台北市"},
+      {id:23,question:"三峽老街位於新北市哪一區?",options:["鶯歌區","三峽區","土城區"],answer:2,city:"新北市"},
+      {id:24,question:"宜蘭傳統藝術中心位於哪裡?",options:["宜蘭市","五結鄉","冬山鄉"],answer:2,city:"宜蘭縣"},
+      {id:25,question:"大溪老街位於桃園市哪一區?",options:["龍潭區","大溪區","復興區"],answer:2,city:"桃園市"},
+      {id:26,question:"海科館位於基隆市哪一區?",options:["中正區","中山區","仁愛區"],answer:1,city:"基隆市"},
+      {id:27,question:"西門町位於台北市哪一區?",options:["中正區","萬華區","大同區"],answer:2,city:"台北市"},
+      {id:28,question:"烏來風景區位於新北市哪一區?",options:["新店區","烏來區","坪林區"],answer:2,city:"新北市"},
+      {id:29,question:"太平山位於宜蘭縣哪裡?",options:["南澳鄉","大同鄉","三星鄉"],answer:2,city:"宜蘭縣"},
+      {id:30,question:"拉拉山位於桃園市哪一區?",options:["大溪區","復興區","龍潭區"],answer:2,city:"桃園市"}
+    ];
+    
+    // ===== 工具函數 =====
+    function shuffle(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+    
+    function formatTime(ms) {
+      const mins = Math.floor(ms / 60000);
+      const secs = Math.floor((ms % 60000) / 1000);
+      return `${mins}分${secs}秒`;
+    }
+    
+    // ===== 狀態 =====
+    let state = {
+      screen: 'menu', // menu, quiz, result
+      selectedCity: null,
+      questions: [],
+      currentIndex: 0,
+      answers: [],
+      startTime: null,
+      endTime: null,
+      trafficScore: 0,
+      geographyScore: 0
+    };
+    
+    // ===== 準備題目 =====
+    function prepareQuestions(city) {
+      let questions = [];
+      
+      // 交通法令：是非20題 + 選擇30題
+      const trafficTF = shuffle(trafficTrueFalse).slice(0, 20).map(q => ({
+        ...q,
+        subject: 'traffic',
+        type: 'tf'
+      }));
+      
+      const trafficMC = shuffle(trafficMultipleChoice).slice(0, 30).map(q => ({
+        ...q,
+        subject: 'traffic',
+        type: 'mc'
+      }));
+      
+      // 地理環境：是非20題 + 選擇30題 (依選擇的城市篩選，或全部)
+      let geoTFPool = geographyTrueFalse;
+      let geoMCPool = geographyMultipleChoice;
+      
+      if (city && city !== 'all') {
+        geoTFPool = geographyTrueFalse.filter(q => q.city === city);
+        geoMCPool = geographyMultipleChoice.filter(q => q.city === city);
+      }
+      
+      const geoTF = shuffle(geoTFPool).slice(0, 20).map(q => ({
+        ...q,
+        subject: 'geography',
+        type: 'tf'
+      }));
+      
+      const geoMC = shuffle(geoMCPool).slice(0, 30).map(q => ({
+        ...q,
+        subject: 'geography',
+        type: 'mc'
+      }));
+      
+      // 先出交通法令50題，再出地理環境50題
+      questions = [...shuffle([...trafficTF, ...trafficMC]), ...shuffle([...geoTF, ...geoMC])];
+      
+      return questions;
+    }
+    
+    // ===== 計算分數 =====
+    function calculateScores() {
+      let trafficCorrect = 0;
+      let trafficTotal = 0;
+      let geoCorrect = 0;
+      let geoTotal = 0;
+      
+      state.questions.forEach((q, i) => {
+        const userAnswer = state.answers[i];
+        let isCorrect = false;
+        
+        if (q.type === 'tf') {
+          isCorrect = (userAnswer === 0 && q.answer === true) || (userAnswer === 1 && q.answer === false);
+        } else {
+          isCorrect = userAnswer === (q.answer - 1);
+        }
+        
+        if (q.subject === 'traffic') {
+          trafficTotal++;
+          if (isCorrect) trafficCorrect++;
+        } else {
+          geoTotal++;
+          if (isCorrect) geoCorrect++;
+        }
+      });
+      
+      const trafficScore = Math.round((trafficCorrect / trafficTotal) * 100);
+      const geoScore = Math.round((geoCorrect / geoTotal) * 100);
+      const avgScore = Math.round((trafficScore + geoScore) / 2);
+      
+      return {
+        trafficCorrect,
+        trafficTotal,
+        trafficScore,
+        geoCorrect,
+        geoTotal,
+        geoScore,
+        avgScore,
+        totalCorrect: trafficCorrect + geoCorrect,
+        totalQuestions: trafficTotal + geoTotal,
+        passed: avgScore >= 70
+      };
+    }
+    
+    // ===== 渲染函數 =====
+    function renderMenu() {
+      const cities = [
+        { key: 'all', name: '綜合(五區)' },
+        { key: '基隆市', name: '基隆市' },
+        { key: '台北市', name: '台北市' },
+        { key: '新北市', name: '新北市' },
+        { key: '宜蘭縣', name: '宜蘭縣' },
+        { key: '桃園市', name: '桃園市' }
+      ];
+      
+      return `
+        <div class="flex-center">
+          <div class="card center">
+            <div class="icon-large">📝</div>
+            <h1>模擬正式考試</h1>
+            <p class="subtitle">計程車執業登記證</p>
+            
+            <div class="info-box">
+              <p>
+                📋 <strong>考試內容</strong><br>
+                • 交通法令：是非 20 題 + 選擇 30 題<br>
+                • 地理環境：是非 20 題 + 選擇 30 題<br>
+                • 共 100 題，兩科平均 <strong style="color:#fb923c;">70 分</strong> 及格
+              </p>
+            </div>
+            
+            <div class="section">
+              <span class="section-title">選擇地理考區</span>
+              <div class="city-grid">
+                ${cities.map(c => `
+                  <button class="city-btn ${state.selectedCity === c.key ? 'active' : ''}" data-city="${c.key}">
+                    ${c.name}
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+            
+            <div class="exam-info">
+              <div class="exam-info-title">📊 考試配分</div>
+              <div class="exam-info-grid">
+                <div class="exam-info-item">
+                  <div class="exam-info-label">交通法令</div>
+                  <div class="exam-info-value">50 題</div>
+                </div>
+                <div class="exam-info-item">
+                  <div class="exam-info-label">地理環境</div>
+                  <div class="exam-info-value">50 題</div>
+                </div>
+              </div>
+            </div>
+            
+            <button class="btn-primary" id="startBtn" ${!state.selectedCity ? 'disabled' : ''}>
+              開始考試 →
+            </button>
+            
+            <a href="index.html" style="display: block; text-align: center; margin-top: 20px; color: rgba(255,255,255,0.5); text-decoration: none; font-size: 14px;">← 返回首頁</a>
+          </div>
+        </div>
+      `;
+    }
+    
+    function renderQuiz() {
+      const q = state.questions[state.currentIndex];
+      const progress = ((state.currentIndex + 1) / state.questions.length) * 100;
+      const answered = state.answers[state.currentIndex] !== undefined;
+      
+      const subjectName = q.subject === 'traffic' ? '交通法令' : '地理環境';
+      const subjectClass = q.subject === 'traffic' ? 'subject-traffic' : 'subject-geography';
+      const typeName = q.type === 'tf' ? '是非題' : '選擇題';
+      const typeClass = q.type === 'tf' ? 'type-tf' : 'type-mc';
+      
+      let options = [];
+      if (q.type === 'tf') {
+        options = ['○ 是 (正確)', '╳ 否 (錯誤)'];
+      } else {
+        options = q.options;
+      }
+      
+      // 判斷答案
+      let correctIndex = q.type === 'tf' ? (q.answer ? 0 : 1) : (q.answer - 1);
+      
+      return `
+        <div class="card">
+          <div class="quiz-header">
+            <span class="quiz-progress">第 ${state.currentIndex + 1} / ${state.questions.length} 題</span>
+            <span class="quiz-timer" id="timer">00:00</span>
+          </div>
+          
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: ${progress}%"></div>
+          </div>
+          
+          <span class="quiz-subject ${subjectClass}">${subjectName}</span>
+          <span class="question-type ${typeClass}">${typeName}</span>
+          
+          <div class="question-text">${q.question}</div>
+          
+          <div class="options">
+            ${options.map((opt, i) => {
+              let cls = 'option-btn';
+              if (answered) {
+                if (i === correctIndex) cls += ' correct';
+                else if (state.answers[state.currentIndex] === i && i !== correctIndex) cls += ' wrong';
+              } else if (state.answers[state.currentIndex] === i) {
+                cls += ' selected';
+              }
+              return `<button class="${cls}" data-option="${i}" ${answered ? 'disabled' : ''}>${opt}</button>`;
+            }).join('')}
+          </div>
+          
+          ${answered ? `
+            <div class="answer-feedback ${state.answers[state.currentIndex] === correctIndex ? 'feedback-correct' : 'feedback-wrong'}">
+              ${state.answers[state.currentIndex] === correctIndex ? '✓ 答對了！' : `✗ 答錯了！正確答案：${options[correctIndex]}`}
+            </div>
+            <button class="nav-btn" id="nextBtn">
+              ${state.currentIndex < state.questions.length - 1 ? '下一題 →' : '查看結果'}
+            </button>
+          ` : ''}
+        </div>
+      `;
+    }
+    
+    function renderResult() {
+      const scores = calculateScores();
+      const duration = state.endTime - state.startTime;
+      
+      return `
+        <div class="card center">
+          <div class="icon-xlarge">${scores.passed ? '🎉' : '📚'}</div>
+          <h2>考試完成！</h2>
+          
+          <div class="result-score ${scores.passed ? 'result-pass' : 'result-fail'}">${scores.avgScore}</div>
+          <div class="result-badge ${scores.passed ? 'badge-pass' : 'badge-fail'}">
+            ${scores.passed ? '✓ 考試通過' : '✗ 未通過'}
+          </div>
+          
+          <div class="score-breakdown">
+            <div class="score-breakdown-title">📊 各科成績</div>
+            <div class="score-row">
+              <span class="score-label">📜 交通法令</span>
+              <span class="score-value score-traffic">${scores.trafficScore} 分 (${scores.trafficCorrect}/${scores.trafficTotal})</span>
+            </div>
+            <div class="score-row">
+              <span class="score-label">🗺️ 地理環境</span>
+              <span class="score-value score-geography">${scores.geoScore} 分 (${scores.geoCorrect}/${scores.geoTotal})</span>
+            </div>
+            <div class="score-row">
+              <span class="score-label">📝 平均分數</span>
+              <span class="score-value score-average">${scores.avgScore} 分</span>
+            </div>
+          </div>
+          
+          <div class="stats-grid">
+            <div class="stat-box stat-box-correct">
+              <div class="stat-number stat-number-correct">${scores.totalCorrect}</div>
+              <div class="stat-label">答對題數</div>
+            </div>
+            <div class="stat-box stat-box-wrong">
+              <div class="stat-number stat-number-wrong">${scores.totalQuestions - scores.totalCorrect}</div>
+              <div class="stat-label">答錯題數</div>
+            </div>
+          </div>
+          
+          <div class="time-box">
+            <span class="time-text">⏱️ 作答時間：${formatTime(duration)}</span>
+          </div>
+          
+          <div style="margin-bottom: 16px; padding: 12px; background: ${scores.passed ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'}; border-radius: 10px; border: 1px solid ${scores.passed ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'};">
+            <span style="color: ${scores.passed ? '#34d399' : '#f87171'}; font-size: 14px;">
+              ${scores.passed ? '🎉 恭喜！兩科平均達 70 分及格標準' : '⚠️ 兩科平均未達 70 分，請繼續努力！'}
+            </span>
+          </div>
+          
+          <div class="btn-group">
+            <button class="btn-secondary" id="reviewBtn">查看答案</button>
+            <button class="btn-secondary" id="wrongOnlyBtn" style="border-color: #ef4444; color: #f87171;">只看錯題</button>
+          </div>
+          
+          <div class="btn-group">
+            <button class="btn-secondary" id="menuBtn">返回選單</button>
+            <button class="btn-primary" id="retryBtn" style="flex: 1;">再考一次</button>
+          </div>
+        </div>
+      `;
+    }
+    
+    // ===== 主渲染 =====
+    function render() {
+      const app = document.getElementById('app');
+      
+      if (state.screen === 'menu') {
+        app.innerHTML = renderMenu();
+      } else if (state.screen === 'quiz') {
+        app.innerHTML = renderQuiz();
+      } else if (state.screen === 'result') {
+        app.innerHTML = renderResult();
+      }
+      
+      attachEvents();
+    }
+    
+    // ===== 計時器 =====
+    let timerInterval;
+    function startTimer() {
+      state.startTime = Date.now();
+      timerInterval = setInterval(() => {
+        const el = document.getElementById('timer');
+        if (el) {
+          const elapsed = Date.now() - state.startTime;
+          const m = Math.floor(elapsed / 60000);
+          const s = Math.floor((elapsed % 60000) / 1000);
+          el.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+      }, 1000);
+    }
+    
+    function stopTimer() {
+      state.endTime = Date.now();
+      clearInterval(timerInterval);
+    }
+    
+    // ===== 事件處理 =====
+    function attachEvents() {
+      // 城市選擇
+      document.querySelectorAll('[data-city]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.selectedCity = btn.dataset.city;
+          render();
+        });
+      });
+      
+      // 開始考試
+      const startBtn = document.getElementById('startBtn');
+      if (startBtn) {
+        startBtn.addEventListener('click', () => {
+          state.questions = prepareQuestions(state.selectedCity);
+          state.currentIndex = 0;
+          state.answers = [];
+          state.screen = 'quiz';
+          render();
+          startTimer();
+        });
+      }
+      
+      // 選項
+      document.querySelectorAll('[data-option]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (state.answers[state.currentIndex] === undefined) {
+            state.answers[state.currentIndex] = parseInt(btn.dataset.option);
+            render();
+          }
+        });
+      });
+      
+      // 下一題
+      const nextBtn = document.getElementById('nextBtn');
+      if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+          if (state.currentIndex < state.questions.length - 1) {
+            state.currentIndex++;
+            render();
+          } else {
+            stopTimer();
+            state.screen = 'result';
+            render();
+          }
+        });
+      }
+      
+      // 返回選單
+      const menuBtn = document.getElementById('menuBtn');
+      if (menuBtn) {
+        menuBtn.addEventListener('click', () => {
+          state.screen = 'menu';
+          state.selectedCity = null;
+          render();
+        });
+      }
+      
+      // 再考一次
+      const retryBtn = document.getElementById('retryBtn');
+      if (retryBtn) {
+        retryBtn.addEventListener('click', () => {
+          state.questions = prepareQuestions(state.selectedCity);
+          state.currentIndex = 0;
+          state.answers = [];
+          state.screen = 'quiz';
+          render();
+          startTimer();
+        });
+      }
+      
+      // 查看答案
+      const reviewBtn = document.getElementById('reviewBtn');
+      if (reviewBtn) {
+        reviewBtn.addEventListener('click', () => showReview(false));
+      }
+      
+      // 只看錯題
+      const wrongOnlyBtn = document.getElementById('wrongOnlyBtn');
+      if (wrongOnlyBtn) {
+        wrongOnlyBtn.addEventListener('click', () => showReview(true));
+      }
+    }
+    
+    // ===== 查看答案 =====
+    function showReview(wrongOnly) {
+      const scores = calculateScores();
+      let items = [];
+      
+      state.questions.forEach((q, i) => {
+        const userAnswer = state.answers[i];
+        let correctIndex = q.type === 'tf' ? (q.answer ? 0 : 1) : (q.answer - 1);
+        let isCorrect = userAnswer === correctIndex;
+        
+        if (wrongOnly && isCorrect) return;
+        
+        let options = q.type === 'tf' ? ['○ 是', '╳ 否'] : q.options;
+        
+        items.push(`
+          <div class="review-item ${isCorrect ? 'correct' : 'wrong'}">
+            <div style="margin-bottom: 8px;">
+              <span class="quiz-subject ${q.subject === 'traffic' ? 'subject-traffic' : 'subject-geography'}" style="font-size: 11px; padding: 2px 8px;">
+                ${q.subject === 'traffic' ? '交通法令' : '地理環境'}
+              </span>
+              <span class="question-type ${q.type === 'tf' ? 'type-tf' : 'type-mc'}" style="font-size: 11px; padding: 2px 8px;">
+                ${q.type === 'tf' ? '是非題' : '選擇題'}
+              </span>
+            </div>
+            <div class="review-question">${i + 1}. ${q.question}</div>
+            <div class="review-answer">
+              正確答案：<strong>${options[correctIndex]}</strong>
+              ${!isCorrect ? `<br>你的答案：<span class="user-wrong">${options[userAnswer] || '未作答'}</span>` : ''}
+            </div>
+          </div>
+        `);
+      });
+      
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
+        <div class="modal-content">
+          <div class="modal-header">
+            <span class="modal-title">${wrongOnly ? '錯題檢討' : '全部答案'} (${items.length}題)</span>
+            <button class="modal-close" id="closeModal">×</button>
+          </div>
+          ${items.length > 0 ? items.join('') : '<p style="text-align:center; color: rgba(255,255,255,0.6); padding: 40px;">🎉 太棒了！沒有錯題</p>'}
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      
+      document.getElementById('closeModal').addEventListener('click', () => {
+        modal.remove();
+      });
+      
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+      });
+    }
+    
+    // ===== 初始化 =====
+    render();
+  </script>
+</body>
+</html>

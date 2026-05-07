@@ -92,6 +92,15 @@
     .card-geography .stat-badge { background: rgba(16, 185, 129, 0.2); color: #34d399; }
     .card-geography:hover { border-color: #10b981; }
     
+    .card-mock-exam { 
+      background: linear-gradient(135deg, rgba(234, 88, 12, 0.1) 0%, rgba(194, 65, 12, 0.05) 100%);
+      border: 2px solid rgba(251, 146, 60, 0.3);
+    }
+    .card-mock-exam .stat-badge { background: rgba(251, 146, 60, 0.2); color: #fb923c; }
+    .card-mock-exam:hover { border-color: #f97316; box-shadow: 0 30px 60px -12px rgba(234, 88, 12, 0.3); }
+    .card-mock-exam .exam-icon { font-size: 64px; }
+    .card-mock-exam .exam-title { color: #fb923c; }
+    
     .enter-hint {
       display: flex;
       align-items: center;
@@ -169,6 +178,20 @@
     </header>
     
     <div class="exam-grid">
+      <a href="mock-exam.html" class="exam-card card-mock-exam" style="grid-column: 1 / -1;">
+        <div class="exam-icon">📝</div>
+        <h2 class="exam-title">模擬正式考試</h2>
+        <p class="exam-desc">模擬正式考試情境，交通法令 + 地理環境共 100 題，兩科平均 70 分及格</p>
+        <div class="exam-stats">
+          <span class="stat-badge">交通法令 50 題</span>
+          <span class="stat-badge">地理環境 50 題</span>
+          <span class="stat-badge">70 分及格</span>
+        </div>
+        <div class="enter-hint">
+          開始考試 <span>→</span>
+        </div>
+      </a>
+      
       <a href="mechanical-quiz.html" class="exam-card card-mechanical">
         <div class="exam-icon">🔧</div>
         <h2 class="exam-title">機械常識</h2>
