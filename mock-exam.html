@@ -559,18 +559,131 @@
       geographyScore: 0
     };
     
+    // ===== 已出題紀錄 =====
+    let usedQuestions = {
+      trafficTF: new Set(),
+      trafficMC: new Set(),
+      geoTF: new Set(),
+      geoMC: new Set()
+    };
+    
+    // ===== 錯題記錄功能 =====
+    const WRONG_QUESTIONS_KEY = 'mockExam_wrongQuestions';
+    
+    function loadWrongQuestions() {
+      try {
+        const data = localStorage.getItem(WRONG_QUESTIONS_KEY);
+        return data ? JSON.parse(data) : { trafficTF: [], trafficMC: [], geoTF: [], geoMC: [] };
+      } catch (e) {
+        return { trafficTF: [], trafficMC: [], geoTF: [], geoMC: [] };
+      }
+    }
+    
+    function saveWrongQuestions(wrongQs) {
+      try {
+        localStorage.setItem(WRONG_QUESTIONS_KEY, JSON.stringify(wrongQs));
+      } catch (e) {
+        console.log('無法儲存錯題');
+      }
+    }
+    
+    function addWrongQuestion(question) {
+      const wrongQs = loadWrongQuestions();
+      let list;
+      if (question.subject === 'traffic') {
+        list = question.type === 'tf' ? wrongQs.trafficTF : wrongQs.trafficMC;
+      } else {
+        list = question.type === 'tf' ? wrongQs.geoTF : wrongQs.geoMC;
+      }
+      
+      if (!list.find(q => q.id === question.id && q.question === question.question)) {
+        list.push({
+          id: question.id,
+          question: question.question,
+          answer: question.answer,
+          options: question.options || null,
+          subject: question.subject,
+          type: question.type,
+          city: question.city || null
+        });
+        saveWrongQuestions(wrongQs);
+      }
+    }
+    
+    function removeWrongQuestion(question) {
+      const wrongQs = loadWrongQuestions();
+      if (question.subject === 'traffic') {
+        if (question.type === 'tf') {
+          wrongQs.trafficTF = wrongQs.trafficTF.filter(q => q.id !== question.id);
+        } else {
+          wrongQs.trafficMC = wrongQs.trafficMC.filter(q => q.id !== question.id);
+        }
+      } else {
+        if (question.type === 'tf') {
+          wrongQs.geoTF = wrongQs.geoTF.filter(q => q.id !== question.id);
+        } else {
+          wrongQs.geoMC = wrongQs.geoMC.filter(q => q.id !== question.id);
+        }
+      }
+      saveWrongQuestions(wrongQs);
+    }
+    
+    function getWrongCount() {
+      const wrongQs = loadWrongQuestions();
+      return {
+        trafficTF: wrongQs.trafficTF.length,
+        trafficMC: wrongQs.trafficMC.length,
+        geoTF: wrongQs.geoTF.length,
+        geoMC: wrongQs.geoMC.length,
+        traffic: wrongQs.trafficTF.length + wrongQs.trafficMC.length,
+        geo: wrongQs.geoTF.length + wrongQs.geoMC.length,
+        total: wrongQs.trafficTF.length + wrongQs.trafficMC.length + wrongQs.geoTF.length + wrongQs.geoMC.length
+      };
+    }
+    
+    function clearAllWrongQuestions() {
+      saveWrongQuestions({ trafficTF: [], trafficMC: [], geoTF: [], geoMC: [] });
+    }
+    
+    // ===== 智慧抽題函數 =====
+    function smartSelect(questions, count, usedSet) {
+      const unused = questions.filter(q => !usedSet.has(q.id));
+      const used = questions.filter(q => usedSet.has(q.id));
+      
+      let selected = [];
+      
+      if (unused.length >= count) {
+        selected = shuffle(unused).slice(0, count);
+      } else {
+        selected = [...shuffle(unused)];
+        const remaining = count - unused.length;
+        if (remaining > 0 && used.length > 0) {
+          selected = [...selected, ...shuffle(used).slice(0, remaining)];
+        }
+      }
+      
+      selected.forEach(q => usedSet.add(q.id));
+      
+      if (usedSet.size >= questions.length) {
+        usedSet.clear();
+        selected.forEach(q => usedSet.add(q.id));
+      }
+      
+      return selected;
+    }
+    
     // ===== 準備題目 =====
     function prepareQuestions(city) {
       let questions = [];
       
-      // 交通法令：是非20題 + 選擇30題
-      const trafficTF = shuffle(trafficTrueFalse).slice(0, 20).map(q => ({
+      // 交通法令：是非20題 + 選擇30題 (智慧抽題)
+      const trafficTF = smartSelect(trafficTrueFalse, 20, usedQuestions.trafficTF).map(q => ({
         ...q,
         subject: 'traffic',
         type: 'tf'
       }));
       
-      const trafficMC = shuffle(trafficMultipleChoice).slice(0, 30).map(q => ({
+      const trafficMC = smartSelect(trafficMultipleChoice, 30, usedQuestions.trafficMC).map(q => ({
         ...q,
         subject: 'traffic',
         type: 'mc'
@@ -585,13 +698,13 @@
         geoMCPool = geographyMultipleChoice.filter(q => q.city === city);
       }
       
-      const geoTF = shuffle(geoTFPool).slice(0, 20).map(q => ({
+      const geoTF = smartSelect(geoTFPool, 20, usedQuestions.geoTF).map(q => ({
         ...q,
         subject: 'geography',
         type: 'tf'
       }));
       
-      const geoMC = shuffle(geoMCPool).slice(0, 30).map(q => ({
+      const geoMC = smartSelect(geoMCPool, 30, usedQuestions.geoMC).map(q => ({
         ...q,
         subject: 'geography',
         type: 'mc'
@@ -658,6 +771,8 @@
         { key: '桃園市', name: '桃園市' }
       ];
       
+      const wrongCount = getWrongCount();
+      
       return `
         <div class="flex-center">
           <div class="card center">
@@ -671,6 +786,7 @@
                 • 交通法令：是非 20 題 + 選擇 30 題<br>
                 • 地理環境：是非 20 題 + 選擇 30 題<br>
                 • 共 100 題，兩科平均 <strong style="color:#60a5fa;">70 分</strong> 及格
+                ${wrongCount.total > 0 ? `<br>📝 錯題本：交通 ${wrongCount.traffic} 題 ｜ 地理 ${wrongCount.geo} 題` : ''}
               </p>
             </div>
             
@@ -702,6 +818,15 @@
             <button class="btn-primary" id="startBtn" ${!state.selectedCity ? 'disabled' : ''}>
               開始考試 →
             </button>
+            
+            ${wrongCount.total > 0 ? `
+              <button class="btn-primary" id="wrongQuizBtn" style="margin-top: 12px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                📝 練習錯題 (${wrongCount.total}題)
+              </button>
+              <button class="btn-secondary" id="clearWrongBtn" style="margin-top: 8px; width: 100%; color: rgba(255,255,255,0.5); border-color: rgba(255,255,255,0.2);">
+                清除錯題紀錄
+              </button>
+            ` : ''}
             
             <a href="index.html" style="display: block; text-align: center; margin-top: 20px; color: rgba(255,255,255,0.5); text-decoration: none; font-size: 14px;">← 返回首頁</a>
           </div>
@@ -774,6 +899,19 @@
       const scores = calculateScores();
       const duration = state.endTime - state.startTime;
       
+      // 計算練習進度
+      const trafficTFUsed = usedQuestions.trafficTF.size;
+      const trafficTFTotal = trafficTrueFalse.length;
+      const trafficMCUsed = usedQuestions.trafficMC.size;
+      const trafficMCTotal = trafficMultipleChoice.length;
+      const geoTFUsed = usedQuestions.geoTF.size;
+      const geoTFTotal = geographyTrueFalse.length;
+      const geoMCUsed = usedQuestions.geoMC.size;
+      const geoMCTotal = geographyMultipleChoice.length;
+      
+      const trafficRemain = (trafficTFTotal - trafficTFUsed) + (trafficMCTotal - trafficMCUsed);
+      const geoRemain = (geoTFTotal - geoTFUsed) + (geoMCTotal - geoMCUsed);
+      
       return `
         <div class="card center">
           <div class="icon-xlarge">${scores.passed ? '🎉' : '📚'}</div>
@@ -813,6 +951,17 @@
           
           <div class="time-box">
             <span class="time-text">⏱️ 作答時間：${formatTime(duration)}</span>
+          </div>
+          
+          <div style="margin: 16px 0; padding: 16px; background: rgba(99, 102, 241, 0.1); border-radius: 12px; border: 1px solid rgba(99, 102, 241, 0.3);">
+            <div style="color: #a5b4fc; font-weight: 600; margin-bottom: 8px;">📊 練習進度</div>
+            <div style="color: rgba(255,255,255,0.8); font-size: 14px; line-height: 1.8;">
+              交通法令：${trafficTFUsed + trafficMCUsed} / ${trafficTFTotal + trafficMCTotal} 題 
+              <span style="color: ${trafficRemain > 0 ? '#fbbf24' : '#34d399'};">(剩餘 ${trafficRemain} 題)</span><br>
+              地理環境：${geoTFUsed + geoMCUsed} / ${geoTFTotal + geoMCTotal} 題 
+              <span style="color: ${geoRemain > 0 ? '#fbbf24' : '#34d399'};">(剩餘 ${geoRemain} 題)</span>
+            </div>
+            ${trafficRemain === 0 && geoRemain === 0 ? '<div style="color: #34d399; font-size: 13px; margin-top: 8px;">✅ 全部題目都練習過了！再考一次將重新開始</div>' : ''}
           </div>
           
           <div style="margin-bottom: 16px; padding: 12px; background: ${scores.passed ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'}; border-radius: 10px; border: 1px solid ${scores.passed ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'};">
@@ -892,11 +1041,72 @@
         });
       }
       
+      // 練習錯題
+      const wrongQuizBtn = document.getElementById('wrongQuizBtn');
+      if (wrongQuizBtn) {
+        wrongQuizBtn.addEventListener('click', () => {
+          const wrongQs = loadWrongQuestions();
+          let questions = [];
+          
+          // 交通法令錯題
+          wrongQs.trafficTF.forEach(q => {
+            questions.push({ ...q, subject: 'traffic', type: 'tf' });
+          });
+          wrongQs.trafficMC.forEach(q => {
+            questions.push({ ...q, subject: 'traffic', type: 'mc' });
+          });
+          
+          // 地理環境錯題
+          wrongQs.geoTF.forEach(q => {
+            questions.push({ ...q, subject: 'geography', type: 'tf' });
+          });
+          wrongQs.geoMC.forEach(q => {
+            questions.push({ ...q, subject: 'geography', type: 'mc' });
+          });
+          
+          if (questions.length === 0) {
+            alert('沒有錯題可練習！');
+            return;
+          }
+          
+          state.questions = shuffle(questions);
+          state.currentIndex = 0;
+          state.answers = [];
+          state.selectedCity = 'all';
+          state.screen = 'quiz';
+          render();
+          startTimer();
+        });
+      }
+      
+      // 清除錯題
+      const clearWrongBtn = document.getElementById('clearWrongBtn');
+      if (clearWrongBtn) {
+        clearWrongBtn.addEventListener('click', () => {
+          if (confirm('確定要清除所有錯題紀錄嗎？')) {
+            clearAllWrongQuestions();
+            render();
+          }
+        });
+      }
+      
       // 選項
       document.querySelectorAll('[data-option]').forEach(btn => {
         btn.addEventListener('click', () => {
           if (state.answers[state.currentIndex] === undefined) {
-            state.answers[state.currentIndex] = parseInt(btn.dataset.option);
+            const selectedOption = parseInt(btn.dataset.option);
+            state.answers[state.currentIndex] = selectedOption;
+            
+            // 記錄錯題或移除正確的題目
+            const currentQ = state.questions[state.currentIndex];
+            let correctIndex = currentQ.type === 'tf' ? (currentQ.answer ? 0 : 1) : (currentQ.answer - 1);
+            
+            if (selectedOption === correctIndex) {
+              removeWrongQuestion(currentQ);
+            } else {
+              addWrongQuestion(currentQ);
+            }
+            
             render();
           }
         });
@@ -921,6 +1131,11 @@
       const menuBtn = document.getElementById('menuBtn');
       if (menuBtn) {
         menuBtn.addEventListener('click', () => {
+          // 返回選單時清除已出題紀錄
+          usedQuestions.trafficTF.clear();
+          usedQuestions.trafficMC.clear();
+          usedQuestions.geoTF.clear();
+          usedQuestions.geoMC.clear();
           state.screen = 'menu';
           state.selectedCity = null;
           render();
