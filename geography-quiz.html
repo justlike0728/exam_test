@@ -942,6 +942,10 @@ function showReview(wrongOnly = false) {
     const userAnswer = item.userAnswer;
     const isCorrect = item.isCorrect;
     
+    // 取得正確答案和用戶答案的文字
+    const correctAnswerText = q.options[q.correct];
+    const userAnswerText = q.options[userAnswer] || '未作答';
+    
     html += `
       <div style="background: ${isCorrect ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)'}; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid ${isCorrect ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'};">
         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
@@ -956,12 +960,17 @@ function showReview(wrongOnly = false) {
           </span>
         </div>
         <p style="color: #fff; margin-bottom: 12px; line-height: 1.6;">${q.text}</p>
-        <div style="font-size: 14px;">
-          ${q.options.map((opt, oi) => `
-            <div style="padding: 6px 12px; margin: 4px 0; border-radius: 8px; ${oi === q.correct ? 'background: rgba(16,185,129,0.2); color: #34d399;' : (oi === userAnswer && oi !== q.correct ? 'background: rgba(239,68,68,0.2); color: #f87171;' : 'color: rgba(255,255,255,0.6);')}">
-              ${oi === q.correct ? '✓ ' : (oi === userAnswer && oi !== q.correct ? '✗ ' : '')}${opt}
+        <div style="font-size: 14px; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 12px;">
+          <div style="margin-bottom: 8px;">
+            <span style="color: rgba(255,255,255,0.5);">正確答案：</span>
+            <span style="color: #34d399; font-weight: 600;">${correctAnswerText}</span>
+          </div>
+          ${!isCorrect ? `
+            <div>
+              <span style="color: rgba(255,255,255,0.5);">你的答案：</span>
+              <span style="color: #f87171; font-weight: 600;">${userAnswerText}</span>
             </div>
-          `).join('')}
+          ` : ''}
         </div>
       </div>
     `;
