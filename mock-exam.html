@@ -1375,7 +1375,7 @@
         avgScore,
         totalCorrect: trafficCorrect + geoCorrect,
         totalQuestions: trafficTotal + geoTotal,
-        passed: avgScore >= 70
+        passed: trafficScore >= 70 && geoScore >= 70
       };
     }
 
@@ -1408,7 +1408,7 @@
                 📋 <strong>考試內容</strong><br>
                 • 交通法令：是非 20 題 + 選擇 30 題 (題庫 ${trafficTotal} 題)<br>
                 • 地理環境：是非 20 題 + 選擇 30 題 (題庫 ${geoTotal} 題)<br>
-                • 共 100 題，兩科平均 <strong style="color:#60a5fa;">70 分</strong> 及格
+                • 共 100 題，兩科皆需 <strong style="color:#60a5fa;">70 分</strong> 以上及格
                 ${wrongCount.total > 0 ? `<br>📝 錯題本：交通 ${wrongCount.traffic} 題 ｜ 地理 ${wrongCount.geo} 題` : ''}
               </p>
             </div>
@@ -1600,7 +1600,13 @@
           
           <div style="margin-bottom: 16px; padding: 12px; background: ${scores.passed ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'}; border-radius: 10px; border: 1px solid ${scores.passed ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'};">
             <span style="color: ${scores.passed ? '#34d399' : '#f87171'}; font-size: 14px;">
-              ${scores.passed ? '🎉 恭喜！兩科平均達 70 分及格標準' : '⚠️ 兩科平均未達 70 分，請繼續努力！'}
+              ${scores.passed 
+                ? '🎉 恭喜！兩科皆達 70 分以上，考試通過！' 
+                : (scores.trafficScore < 70 && scores.geoScore < 70 
+                    ? '⚠️ 兩科皆未達 70 分，請繼續努力！'
+                    : (scores.trafficScore < 70 
+                        ? '⚠️ 交通法令未達 70 分，請加強！'
+                        : '⚠️ 地理環境未達 70 分，請加強！'))}
             </span>
           </div>
           
